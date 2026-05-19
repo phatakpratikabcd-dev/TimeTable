@@ -55,8 +55,8 @@
     .btn-primary { background: linear-gradient(135deg, #3b82f6, #2563eb); transition: all 0.2s; }
     .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -5px rgba(59,130,246,0.4); }
     
-    .btn-secondary { background: linear-gradient(135deg, #f59e0b, #d97706); transition: all 0.2s; }
-    .btn-secondary:hover { transform: translateY(-2px); }
+    .notification-permission-banner { background: linear-gradient(135deg, #fef3c7, #fde68a); border-left: 4px solid #f59e0b; cursor: pointer; transition: all 0.2s; }
+    .notification-permission-banner:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(245,158,11,0.3); }
   </style>
 </head>
 <body class="bg-gradient-to-br from-gray-50 to-gray-100">
@@ -104,6 +104,19 @@
     </div>
   </div>
 
+  <div id="notificationPrompt" class="notification-permission-banner hidden rounded-xl p-4 mb-5 shadow-sm">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <i class="fas fa-bell text-amber-600 text-2xl"></i>
+        <div>
+          <div class="font-bold text-gray-800">Enable Notifications</div>
+          <div class="text-xs text-gray-600">Get instant alerts when timetable updates are made</div>
+        </div>
+      </div>
+      <button id="enableNotificationsBtn" class="bg-amber-600 text-white px-4 py-2 rounded-full text-sm font-semibold shadow hover:bg-amber-700 transition"><i class="fas fa-bell mr-1"></i> Enable</button>
+    </div>
+  </div>
+
   <div id="latestChangesPanel" class="mb-6 hidden">
     <div class="flex items-center gap-2 mb-3">
       <div class="w-1 h-6 bg-gradient-to-b from-amber-500 to-orange-500 rounded-full"></div>
@@ -133,6 +146,7 @@
       <button id="exportBtn" class="bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow hover:bg-emerald-700 transition"><i class="fas fa-download mr-1"></i> Export JSON</button>
       <button id="resetBtn" class="bg-rose-600 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow hover:bg-rose-700 transition"><i class="fas fa-undo-alt mr-1"></i> Reset Default</button>
       <button id="clearHistoryBtn" class="bg-gray-600 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow hover:bg-gray-700 transition"><i class="fas fa-trash-alt mr-1"></i> Clear History</button>
+      <button id="testNotificationBtn" class="bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow hover:bg-indigo-700 transition"><i class="fas fa-bell mr-1"></i> Test Notification</button>
     </div>
     <p class="text-xs text-gray-500 mt-4"><i class="fas fa-edit mr-1"></i> Click edit icon next to any cell to modify • Changes sync to cloud instantly</p>
   </div>
@@ -154,7 +168,7 @@
   
   <div class="text-xs text-gray-500 mt-4 flex justify-between items-center">
     <span><i class="far fa-clock mr-1"></i> Last sync: <span id="lastSync" class="font-mono">—</span></span>
-    <span id="notifStatus" class="flex items-center gap-1"><i class="fas fa-bell text-green-600"></i> <span>Push enabled</span></span>
+    <span id="notifStatus" class="flex items-center gap-1"><i class="fas fa-bell-slash text-gray-400"></i> <span>Notifications off</span></span>
     <span><i class="fas fa-history mr-1"></i> <span id="totalChanges">0</span> updates tracked</span>
   </div>
 </div>
@@ -195,17 +209,18 @@ let isAdmin = false;
 let swRegistration = null;
 let deferredPrompt = null;
 let changeHistory = [];
+let notificationPermissionGranted = false;
 
 function loadChangeHistory() {
   const saved = localStorage.getItem('change_history_vtu');
   if (saved) changeHistory = JSON.parse(saved);
   renderLatestChanges();
+  document.getElementById('totalChanges').innerText = changeHistory.length;
 }
 
 function saveChangeHistory() {
   localStorage.setItem('change_history_vtu', JSON.stringify(changeHistory.slice(0, 25)));
   renderLatestChanges();
-  document.getElementById('totalChanges').innerText = changeHistory.length;
 }
 
 function addToChangeHistory(message, type = 'edit') {
@@ -213,17 +228,15 @@ function addToChangeHistory(message, type = 'edit') {
     id: Date.now(),
     message: message,
     type: type,
-    timestamp: new Date().toLocaleString('en-IN', { hour12: true }),
-    fullDate: new Date().toLocaleString()
+    timestamp: new Date().toLocaleString('en-IN', { hour12: true })
   };
   changeHistory.unshift(change);
   if (changeHistory.length > 25) changeHistory.pop();
   saveChangeHistory();
-  sendNotification(message);
+  sendPushNotification(message);
   renderLatestChanges();
   const panel = document.getElementById('latestChangesPanel');
   panel.style.display = 'block';
-  setTimeout(() => { panel.style.opacity = '1'; }, 80);
 }
 
 function renderLatestChanges() {
@@ -299,6 +312,69 @@ async function saveToCloud(changeMessage, changeType = 'edit') {
     showToast('⚠️ Saved locally (offline)', 'warning');
   }
   renderTable();
+}
+
+async function sendPushNotification(message) {
+  if (notificationPermissionGranted && swRegistration && swRegistration.active) {
+    try {
+      await swRegistration.active.postMessage({
+        type: 'SHOW_NOTIFICATION',
+        title: '📅 VTU Timetable Update',
+        body: message,
+        icon: '/favicon.ico',
+        badge: '/favicon.ico',
+        vibrate: [200, 100, 200],
+        tag: 'timetable-update',
+        renotify: true
+      });
+      console.log('Notification sent via Service Worker');
+    } catch(e) { console.log('SW message error:', e); }
+  }
+  
+  if (notificationPermissionGranted && Notification.permission === 'granted') {
+    try {
+      new Notification('📅 VTU Exam Timetable Update', { 
+        body: message, 
+        icon: '/favicon.ico',
+        badge: '/favicon.ico',
+        vibrate: [200, 100, 200],
+        silent: false
+      });
+      console.log('Direct notification shown');
+    } catch(e) { console.log('Direct notification error:', e); }
+  }
+}
+
+async function enableNotifications() {
+  if ('Notification' in window) {
+    const permission = await Notification.requestPermission();
+    if (permission === 'granted') {
+      notificationPermissionGranted = true;
+      localStorage.setItem('notifications_enabled', 'true');
+      document.getElementById('notificationPrompt').classList.add('hidden');
+      document.getElementById('notifStatus').innerHTML = '<i class="fas fa-bell text-green-600"></i> <span>Notifications ON</span>';
+      showToast('🔔 Notifications enabled! You will receive updates', 'success');
+      
+      if (swRegistration && swRegistration.active) {
+        await swRegistration.active.postMessage({ type: 'TEST_NOTIFICATION', message: 'Notifications are working!' });
+      }
+      new Notification('✅ Notifications Enabled', { body: 'You will now receive timetable updates instantly', icon: '/favicon.ico' });
+    } else {
+      showToast('❌ Notification permission denied', 'warning');
+    }
+  } else {
+    showToast('⚠️ Notifications not supported on this browser', 'warning');
+  }
+}
+
+function testNotification() {
+  if (notificationPermissionGranted) {
+    sendPushNotification('🔔 Test notification: Your notification system is working!');
+    showToast('Test notification sent!', 'success');
+  } else {
+    showToast('Please enable notifications first', 'warning');
+    document.getElementById('notificationPrompt').classList.remove('hidden');
+  }
 }
 
 async function editField(idx, field) {
@@ -387,15 +463,6 @@ function exportJSON() {
   showToast('📁 JSON exported successfully', 'success');
 }
 
-async function sendNotification(message) {
-  if (swRegistration && swRegistration.active) {
-    swRegistration.active.postMessage({ type: 'SHOW_NOTIFICATION', title: '📅 VTU Timetable Update', body: message, icon: '/logo.png' });
-  }
-  if (Notification.permission === 'granted') {
-    new Notification('VTU Exam Timetable', { body: message, icon: '/logo.png', vibrate: [200, 100, 200] });
-  }
-}
-
 function showToast(msg, type) {
   const toast = document.getElementById('toast');
   document.getElementById('toastMsg').innerHTML = msg;
@@ -414,14 +481,34 @@ async function registerServiceWorker() {
   if ('serviceWorker' in navigator) {
     const swCode = `self.addEventListener('install', e => { self.skipWaiting(); });
 self.addEventListener('activate', e => { e.waitUntil(clients.claim()); });
-self.addEventListener('message', e => { if(e.data?.type === 'SHOW_NOTIFICATION') self.registration.showNotification(e.data.title, { body: e.data.body, icon: e.data.icon || '/logo.png', vibrate: [200,100,200] }); });`;
+self.addEventListener('message', event => {
+  if (event.data && event.data.type === 'SHOW_NOTIFICATION') {
+    self.registration.showNotification(event.data.title, { 
+      body: event.data.body, 
+      icon: event.data.icon || '/favicon.ico',
+      badge: event.data.badge || '/favicon.ico',
+      vibrate: event.data.vibrate || [200, 100, 200],
+      tag: event.data.tag || 'update',
+      renotify: true,
+      requireInteraction: true
+    });
+  }
+  if (event.data && event.data.type === 'TEST_NOTIFICATION') {
+    self.registration.showNotification('🔔 Notification Test', { body: event.data.message || 'Your notifications are working!', icon: '/favicon.ico', vibrate: [200, 100, 200] });
+  }
+});`;
     const swBlob = new Blob([swCode], {type: 'application/javascript'});
     const swUrl = URL.createObjectURL(swBlob);
     const registration = await navigator.serviceWorker.register(swUrl);
     swRegistration = registration;
-    if (Notification.permission !== 'denied') {
-      await Notification.requestPermission();
-      document.getElementById('notifStatus').innerHTML = '<i class="fas fa-bell text-green-600"></i> <span>Push enabled</span>';
+    
+    const savedNotifSetting = localStorage.getItem('notifications_enabled');
+    if (savedNotifSetting === 'true' && Notification.permission === 'granted') {
+      notificationPermissionGranted = true;
+      document.getElementById('notificationPrompt').classList.add('hidden');
+      document.getElementById('notifStatus').innerHTML = '<i class="fas fa-bell text-green-600"></i> <span>Notifications ON</span>';
+    } else if (Notification.permission !== 'denied' && !savedNotifSetting) {
+      document.getElementById('notificationPrompt').classList.remove('hidden');
     }
   }
 }
@@ -429,6 +516,8 @@ self.addEventListener('message', e => { if(e.data?.type === 'SHOW_NOTIFICATION')
 window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; if (!localStorage.getItem('banner_dismissed_vtu')) document.getElementById('installBanner').classList.remove('hidden'); });
 document.getElementById('installAppBtn')?.addEventListener('click', async () => { if (deferredPrompt) { deferredPrompt.prompt(); const { outcome } = await deferredPrompt.userChoice; if (outcome === 'accepted') { document.getElementById('installBanner').classList.add('hidden'); localStorage.setItem('banner_dismissed_vtu', 'true'); showToast('🎉 App installed on home screen!', 'success'); } deferredPrompt = null; } });
 document.getElementById('closeBanner')?.addEventListener('click', () => { document.getElementById('installBanner').classList.add('hidden'); localStorage.setItem('banner_dismissed_vtu', 'true'); });
+document.getElementById('enableNotificationsBtn')?.addEventListener('click', enableNotifications);
+document.getElementById('testNotificationBtn')?.addEventListener('click', testNotification);
 window.addEventListener('appinstalled', () => { document.getElementById('installBanner').classList.add('hidden'); showToast('✅ Installation complete!', 'success'); });
 
 let lastVersion = '';
