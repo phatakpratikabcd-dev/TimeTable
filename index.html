@@ -4,547 +4,588 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#1E3A8A">
-  <title>Exam Timetable PWA | Live Updates</title>
+  <meta name="description" content="UG Examination Timetable June-July 2026">
+  <title>VTU Exam Timetable | Live Updates</title>
   <link rel="manifest" href="manifest.json">
-  <!-- Tailwind CSS + Font Awesome -->
+  <link rel="apple-touch-icon" href="logo.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
-    .toast-notify {
-      position: fixed;
-      bottom: 20px;
-      left: 20px;
-      right: 20px;
-      background: #1f2937;
-      color: white;
-      padding: 12px 20px;
-      border-radius: 32px;
-      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.2);
-      z-index: 1000;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      transform: translateY(100px);
-      opacity: 0;
-      transition: transform 0.25s, opacity 0.2s;
-      pointer-events: none;
-    }
-    .toast-notify.show {
-      transform: translateY(0);
-      opacity: 1;
-      pointer-events: auto;
-    }
-    .spinner {
-      border: 3px solid rgba(59,130,246,0.2);
-      border-radius: 50%;
-      border-top: 3px solid #3b82f6;
-      width: 40px;
-      height: 40px;
-      animation: spin 0.8s linear infinite;
-      margin: 20px auto;
-    }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    .admin-panel {
-      background: linear-gradient(135deg, #fef3c7 0%, #fffbeb 100%);
-      border-left: 4px solid #f59e0b;
-    }
-    button:active { transform: scale(0.97); }
-    .editable-cell {
-      cursor: pointer;
-      transition: background 0.1s ease;
-    }
-    .editable-cell:hover {
-      background-color: #fef3c7 !important;
-    }
-    @media (max-width: 700px) {
-      .table-wrapper { overflow-x: auto; display: block; }
-      td, th { white-space: nowrap; }
-    }
-    .status-badge {
-      display: inline-block;
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      margin-right: 6px;
-    }
-    .status-online { background-color: #22c55e; box-shadow: 0 0 4px #22c55e; }
-    .status-syncing { background-color: #f59e0b; animation: pulse 1s infinite; }
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    * { font-family: 'Inter', sans-serif; }
+    
+    .toast { position: fixed; bottom: 24px; left: 24px; right: 24px; background: #1e293b; color: white; padding: 14px 20px; border-radius: 48px; z-index: 1000; display: flex; align-items: center; gap: 12px; transform: translateY(120px); opacity: 0; transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55); box-shadow: 0 20px 35px -10px rgba(0,0,0,0.3); backdrop-filter: blur(10px); background: rgba(30, 41, 59, 0.95); }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .spinner { border: 3px solid #e2e8f0; border-top-color: #3b82f6; border-radius: 50%; width: 42px; height: 42px; animation: spin 0.8s linear infinite; margin: 20px auto; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .status-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; animation: pulse 2s infinite; }
+    .online { background-color: #10b981; box-shadow: 0 0 8px #10b981; }
+    .syncing { background-color: #f59e0b; animation: pulse 0.8s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    
+    .install-banner { background: linear-gradient(135deg, #1e3a8a, #3b82f6, #06b6d4); animation: slideDown 0.5s ease; position: fixed; top: 0; left: 0; right: 0; z-index: 1001; box-shadow: 0 10px 40px rgba(0,0,0,0.25); backdrop-filter: blur(5px); }
+    @keyframes slideDown { from { transform: translateY(-100%); } to { transform: translateY(0); } }
+    
+    .latest-card { background: linear-gradient(135deg, #f0f9ff, #e0f2fe); border-left: 4px solid #3b82f6; transition: all 0.3s; border-radius: 16px; }
+    .latest-card:hover { transform: translateX(6px); box-shadow: 0 8px 20px rgba(59,130,246,0.2); }
+    
+    .vtu-logo { background: linear-gradient(135deg, #1e3a8a, #1e40af); border-radius: 50%; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 20px rgba(0,0,0,0.2); transition: transform 0.2s; }
+    .vtu-logo:hover { transform: scale(1.05); }
+    
+    @media (max-width: 768px) { .table-wrapper { overflow-x: auto; } td, th { white-space: nowrap; } }
+    
+    .change-log { max-height: 220px; overflow-y: auto; scrollbar-width: thin; }
+    .change-log::-webkit-scrollbar { width: 5px; }
+    .change-log::-webkit-scrollbar-track { background: #e2e8f0; border-radius: 10px; }
+    .change-log::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 10px; }
+    
+    .edit-icon-btn { opacity: 0; transition: all 0.2s; background: #3b82f6; color: white; border-radius: 50%; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; margin-left: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+    tr:hover .edit-icon-btn { opacity: 1; }
+    .edit-icon-btn:hover { transform: scale(1.1); background: #2563eb; }
+    
+    .admin-mode-badge { background: linear-gradient(135deg, #f59e0b, #d97706); padding: 4px 12px; border-radius: 40px; font-size: 11px; font-weight: 600; color: white; letter-spacing: 0.5px; }
+    
+    .btn-primary { background: linear-gradient(135deg, #3b82f6, #2563eb); transition: all 0.2s; }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -5px rgba(59,130,246,0.4); }
+    
+    .notification-permission-banner { background: linear-gradient(135deg, #fef3c7, #fde68a); border-left: 4px solid #f59e0b; cursor: pointer; transition: all 0.2s; }
+    .notification-permission-banner:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(245,158,11,0.3); }
   </style>
 </head>
-<body class="bg-gray-50 font-sans antialiased">
+<body class="bg-gradient-to-br from-gray-50 to-gray-100">
 
-  <div id="app" class="max-w-7xl mx-auto px-4 py-5 md:py-6">
-    <!-- Header with PWA controls -->
-    <div class="flex flex-wrap justify-between items-center mb-5 border-b pb-3">
+<div id="installBanner" class="install-banner hidden text-white p-4">
+  <div class="flex items-center justify-between max-w-7xl mx-auto">
+    <div class="flex items-center gap-3">
+      <div class="vtu-logo bg-white/20">
+        <i class="fas fa-graduation-cap text-2xl text-white"></i>
+      </div>
       <div>
-        <h1 class="text-2xl md:text-3xl font-bold text-blue-900">
-          <i class="fas fa-calendar-alt text-blue-600 mr-2"></i> Exam Timetable
+        <div class="font-bold text-lg">Install VTU Exam Timetable</div>
+        <div class="text-xs opacity-90">Instant updates • Offline access • Push notifications</div>
+      </div>
+    </div>
+    <div class="flex gap-2">
+      <button id="closeBanner" class="px-3 py-1.5 rounded-full bg-white/20 hover:bg-white/30 text-sm transition"><i class="fas fa-times"></i></button>
+      <button id="installAppBtn" class="px-5 py-2 rounded-full bg-white text-blue-900 font-bold text-sm shadow-lg hover:shadow-xl transition"><i class="fas fa-download mr-2"></i> Install App</button>
+    </div>
+  </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 py-6" style="padding-top: 24px;">
+  
+  <div class="flex flex-wrap justify-between items-center mb-6 pb-2">
+    <div class="flex items-center gap-4">
+      <div class="vtu-logo">
+        <i class="fas fa-graduation-cap text-2xl text-white"></i>
+      </div>
+      <div>
+        <h1 class="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-blue-900 via-blue-700 to-blue-600 bg-clip-text text-transparent">
+          VTU Exam Timetable
         </h1>
-        <p class="text-gray-500 text-sm">June-July 2026 UG Examinations • Live Cloud Sync</p>
-        <div class="flex items-center gap-3 mt-1 text-xs">
-          <span class="flex items-center"><span class="status-badge status-online" id="syncStatusDot"></span> <span id="syncStatusText">Connected to Cloud</span></span>
-          <span class="text-gray-400">|</span>
-          <span><i class="fas fa-database"></i> <span id="dataVersionText">v1.0</span></span>
+        <p class="text-gray-500 text-sm mt-1">June-July 2026 • Real-time Cloud Sync</p>
+        <div class="flex items-center gap-4 mt-1.5 text-xs">
+          <span class="flex items-center"><span class="status-dot online" id="statusDot"></span><span id="statusText" class="font-medium">Connected</span></span>
+          <span class="text-gray-300">|</span>
+          <span><i class="fas fa-cloud-upload-alt text-blue-500 mr-1"></i> <span id="syncStatus" class="font-medium">Synced</span></span>
         </div>
       </div>
-      <div class="flex gap-2 mt-2 md:mt-0">
-        <button id="installBtn" class="hidden bg-gray-800 text-white px-3 py-2 rounded-full text-sm shadow-md"><i class="fas fa-download mr-1"></i> Install</button>
-        <button id="syncBtn" class="bg-blue-100 text-blue-700 px-3 py-2 rounded-full text-sm shadow-sm hover:bg-blue-200"><i class="fas fa-cloud-upload-alt mr-1"></i> Force Sync</button>
-        <button id="adminToggleBtn" class="bg-amber-100 text-amber-800 px-3 py-2 rounded-full text-sm shadow-sm"><i class="fas fa-user-shield mr-1"></i> Admin</button>
-      </div>
     </div>
-
-    <!-- Admin Control Panel (hidden by default) -->
-    <div id="adminPanel" class="admin-panel p-5 rounded-2xl shadow-lg mb-8 hidden border border-amber-200">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl font-bold text-gray-800"><i class="fas fa-crown text-amber-600 mr-2"></i>Administrator Dashboard</h2>
-        <span class="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full"><i class="fas fa-bell"></i> Changes → Auto Notify ALL Users</span>
-      </div>
-      <div class="bg-blue-50 p-3 rounded-lg mb-4 text-sm border border-blue-200">
-        <i class="fas fa-info-circle text-blue-600"></i> <strong>How it works:</strong> Edit any cell by clicking on it. Changes are saved to <strong>JSONBin cloud</strong> and all connected users receive instant notification + auto-refresh.
-      </div>
-      
-      <!-- Add New Entry Form -->
-      <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-5 bg-white p-4 rounded-xl shadow-sm">
-        <input type="text" id="newCourse" placeholder="Course (e.g. B.Arch)" class="border p-2 rounded text-sm focus:ring-2 focus:ring-blue-300">
-        <input type="text" id="newSem" placeholder="Semester" class="border p-2 rounded text-sm">
-        <input type="text" id="newScheme" placeholder="Scheme" class="border p-2 rounded text-sm">
-        <input type="text" id="newTheoryStart" placeholder="Theory Start (DD-MM-YYYY)" class="border p-2 rounded text-sm">
-        <input type="text" id="newTheoryEnd" placeholder="Theory End" class="border p-2 rounded text-sm">
-        <input type="text" id="newPracticalStart" placeholder="Practical Start" class="border p-2 rounded text-sm">
-        <input type="text" id="newPracticalEnd" placeholder="Practical End" class="border p-2 rounded text-sm">
-        <input type="text" id="newResultDay" placeholder="Result Day" class="border p-2 rounded text-sm">
-        <input type="text" id="newRemark" placeholder="Remark" class="border p-2 rounded text-sm">
-        <button id="addEntryBtn" class="bg-blue-600 text-white rounded-md py-2 px-3 text-sm font-semibold hover:bg-blue-700"><i class="fas fa-plus mr-1"></i> Add Entry</button>
-      </div>
-      
-      <!-- Cloud Management Tools -->
-      <div class="flex flex-wrap gap-3 pt-2 border-t border-amber-200">
-        <button id="exportJsonBtn" class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm shadow hover:bg-green-700"><i class="fas fa-download"></i> Export as JSON</button>
-        <button id="importJsonBtn" class="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm shadow hover:bg-purple-700"><i class="fas fa-upload"></i> Import JSON File</button>
-        <button id="resetToDefaultBtn" class="bg-red-500 text-white px-4 py-2 rounded-lg text-sm shadow hover:bg-red-600"><i class="fas fa-undo-alt"></i> Reset to Default Timetable</button>
-        <input type="file" id="jsonFileInput" accept=".json" class="hidden" />
-      </div>
-      <div class="text-xs text-gray-500 mt-3"><i class="fas fa-globe"></i> Data stored securely on JSONBin cloud • Accessible from any device</div>
-    </div>
-
-    <!-- Timetable Table -->
-    <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200">
-      <div class="table-wrapper">
-        <table class="min-w-full text-sm text-left text-gray-700" id="timetableTable">
-          <thead class="bg-gradient-to-r from-blue-800 to-blue-900 text-white text-xs uppercase tracking-wider">
-            <tr>
-              <th class="px-4 py-3">#</th><th>Course</th><th>Sem</th><th>Scheme</th><th>Theory Start</th><th>Theory End</th><th>Practical Start</th><th>Practical End</th><th>Result Day</th><th>Remark</th>
-            </tr>
-          </thead>
-          <tbody id="tableBody">
-            <tr><td colspan="10" class="text-center py-12"><div class="spinner"></div><p class="text-gray-500 mt-2">Loading timetable from cloud...</p></td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-    
-    <!-- Footer Status -->
-    <div class="flex justify-between items-center text-xs text-gray-500 mt-4 px-1">
-      <span><i class="far fa-clock"></i> Last sync: <span id="lastSyncTime" class="font-mono">—</span></span>
-      <span id="notificationStatus"><i class="fas fa-bell text-green-600"></i> Push notifications ready</span>
-      <span><i class="fas fa-chart-line"></i> <span id="rowCount">0</span> entries</span>
+    <div class="flex gap-3 mt-3 md:mt-0">
+      <button id="refreshBtn" class="bg-white/80 backdrop-blur-sm text-blue-700 px-4 py-2 rounded-full text-sm font-semibold shadow-md hover:shadow-lg transition border border-blue-200"><i class="fas fa-sync-alt mr-1"></i> Refresh</button>
+      <button id="adminBtn" class="bg-amber-100 text-amber-800 px-4 py-2 rounded-full text-sm font-semibold shadow-md hover:shadow-lg transition"><i class="fas fa-user-shield mr-1"></i> Admin Mode</button>
     </div>
   </div>
 
-  <!-- Toast Notification -->
-  <div id="toastMsg" class="toast-notify"><i class="fas fa-bell text-amber-300"></i><span id="toastText" class="flex-1">Notification</span></div>
+  <div id="notificationPrompt" class="notification-permission-banner hidden rounded-xl p-4 mb-5 shadow-sm">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <i class="fas fa-bell text-amber-600 text-2xl"></i>
+        <div>
+          <div class="font-bold text-gray-800">Enable Notifications</div>
+          <div class="text-xs text-gray-600">Get instant alerts when timetable updates are made</div>
+        </div>
+      </div>
+      <button id="enableNotificationsBtn" class="bg-amber-600 text-white px-4 py-2 rounded-full text-sm font-semibold shadow hover:bg-amber-700 transition"><i class="fas fa-bell mr-1"></i> Enable</button>
+    </div>
+  </div>
 
-  <script>
-    // ======================= CONFIGURATION =======================
-    // 🔴 IMPORTANT: Replace these with your actual JSONBin credentials
-    // Step 1: Go to https://jsonbin.io and sign up (free)
-    // Step 2: Create a new bin and paste your default timetable
-    // Step 3: Copy your Bin ID and API Key below
-    const JSONBIN_BIN_ID = "6a0c3cffee5a733b12e37880";      // Get from jsonbin.io after creating bin
-    const JSONBIN_API_KEY = "$2a$10$tRGv70nFoF/rZqTe2OFv0u7.KV1VWHO1FDy4CpGlGqvo3UVaNtonm";  // Your secret API key (keep secure)
-    // For first-time users, we'll auto-create a bin if not exists
-    
-    let currentData = [];
-    let isAdminMode = false;
-    let deferredPrompt = null;
-    let swRegistration = null;
-    let pollingInterval = null;
-    let isSyncing = false;
-    let currentVersion = "initial";
-    
-    // Default Timetable Data (from your original)
-    const DEFAULT_TIMETABLE = [
-      { slno:1, course:"B.Arch", sem:"2", scheme:"21", theoryStart:"16-06-2026", theoryEnd:"08-07-2026", practicalStart:"", practicalEnd:"", resultDay:"29-07-2026", remark:"" },
-      { slno:2, course:"B.Arch", sem:"4", scheme:"21", theoryStart:"16-06-2026", theoryEnd:"08-07--2026", practicalStart:"", practicalEnd:"", resultDay:"29-07-2026", remark:"" },
-      { slno:3, course:"B.Arch", sem:"6", scheme:"21", theoryStart:"18-05-2026", theoryEnd:"17-06-2026", practicalStart:"", practicalEnd:"", resultDay:"08-07-2026", remark:"" },
-      { slno:4, course:"B.Arch", sem:"8", scheme:"21", theoryStart:"01-06-2026", theoryEnd:"13-06-2026", practicalStart:"", practicalEnd:"", resultDay:"08-06-2026", remark:"" },
-      { slno:5, course:"B.Arch", sem:"10", scheme:"21", theoryStart:"", theoryEnd:"", practicalStart:"", practicalEnd:"", resultDay:"", remark:"" },
-      { slno:6, course:"B.Design", sem:"2", scheme:"22", theoryStart:"16-06-2026", theoryEnd:"08-07-2026", practicalStart:"", practicalEnd:"", resultDay:"29-07-2026", remark:"" },
-      { slno:7, course:"B.Design", sem:"4", scheme:"22", theoryStart:"16-06-2026", theoryEnd:"08-07-2026", practicalStart:"", practicalEnd:"", resultDay:"29-07-2026", remark:"" },
-      { slno:8, course:"B.Design", sem:"6", scheme:"22", theoryStart:"18-05-2026", theoryEnd:"17-06-2026", practicalStart:"", practicalEnd:"", resultDay:"08-07-2026", remark:"" },
-      { slno:9, course:"BE", sem:"2", scheme:"25", theoryStart:"16-06-2026", theoryEnd:"08-07-2026", practicalStart:"", practicalEnd:"", resultDay:"29-07-2026", remark:"" },
-      { slno:10, course:"BE", sem:"4", scheme:"22", theoryStart:"16-06-2026", theoryEnd:"08-07-2026", practicalStart:"", practicalEnd:"", resultDay:"29-07-2026", remark:"" },
-      { slno:11, course:"BE", sem:"6", scheme:"22", theoryStart:"18-05-2026", theoryEnd:"17-06-2026", practicalStart:"", practicalEnd:"", resultDay:"08-07-2026", remark:"" },
-      { slno:12, course:"BE", sem:"8", scheme:"22", theoryStart:"", theoryEnd:"", practicalStart:"", practicalEnd:"22-05-2026", resultDay:"", remark:"" },
-      { slno:13, course:"B.Plan", sem:"2", scheme:"21", theoryStart:"16-06-2026", theoryEnd:"08-07-2026", practicalStart:"", practicalEnd:"", resultDay:"29-07-2026", remark:"" },
-      { slno:14, course:"B.Plan", sem:"4", scheme:"21", theoryStart:"16-06-2026", theoryEnd:"08-07-2026", practicalStart:"", practicalEnd:"", resultDay:"29-07-2026", remark:"" },
-      { slno:15, course:"B.Plan", sem:"6", scheme:"21", theoryStart:"18-05-2026", theoryEnd:"17-06-2026", practicalStart:"", practicalEnd:"", resultDay:"08-07-2026", remark:"" },
-      { slno:16, course:"B.Plan", sem:"8", scheme:"21", theoryStart:"21-04-2026", theoryEnd:"15-05-2026", practicalStart:"", practicalEnd:"", resultDay:"08-06-2026", remark:"" },
-      { slno:17, course:"BSc(Hons)", sem:"2", scheme:"21", theoryStart:"15-06-2026", theoryEnd:"16-06-2026", practicalStart:"", practicalEnd:"", resultDay:"29-07-2026", remark:"" },
-      { slno:18, course:"BSc(Hons)", sem:"4", scheme:"21", theoryStart:"15-06-2026", theoryEnd:"16-06-2026", practicalStart:"", practicalEnd:"", resultDay:"29-07-2026", remark:"" },
-      { slno:19, course:"BSc(Hons)", sem:"6", scheme:"21", theoryStart:"16-05-2026", theoryEnd:"18-05-2026", practicalStart:"", practicalEnd:"", resultDay:"08-07-2026", remark:"" },
-      { slno:20, course:"BSc(Hons)", sem:"8", scheme:"21", theoryStart:"21-04-2026", theoryEnd:"15-05-2026", practicalStart:"", practicalEnd:"", resultDay:"08-06-2026", remark:"" },
-      { slno:21, course:"BBA/BCA", sem:"2", scheme:"24", theoryStart:"16-06-2026", theoryEnd:"08-07-2026", practicalStart:"", practicalEnd:"", resultDay:"29-07-2026", remark:"" },
-      { slno:22, course:"BBA/BCA", sem:"4", scheme:"24", theoryStart:"18-05-2026", theoryEnd:"17-06-2026", practicalStart:"", practicalEnd:"", resultDay:"08-07-2026", remark:"" }
-    ];
-    
-    // ======================= CLOUD STORAGE FUNCTIONS =======================
-    async function loadFromCloud() {
-      if (isSyncing) return;
-      isSyncing = true;
-      updateSyncStatus("syncing", "Syncing...");
-      try {
-        // If no bin ID configured, initialize with default
-        if (JSONBIN_BIN_ID === "6a0c3cffee5a733b12e37880") {
-          console.warn("No JSONBin configured. Using localStorage fallback.");
-          loadFromLocalStorage();
-          isSyncing = false;
-          return;
+  <div id="latestChangesPanel" class="mb-6 hidden">
+    <div class="flex items-center gap-2 mb-3">
+      <div class="w-1 h-6 bg-gradient-to-b from-amber-500 to-orange-500 rounded-full"></div>
+      <h2 class="font-bold text-gray-700 text-lg">Latest Updates</h2>
+      <span class="text-xs bg-red-100 text-red-600 px-2.5 py-0.5 rounded-full font-semibold" id="changesCount">0</span>
+    </div>
+    <div id="changesList" class="change-log space-y-2"></div>
+  </div>
+
+  <div id="adminPanel" class="hidden bg-gradient-to-r from-amber-50 to-yellow-50 p-6 rounded-2xl mb-6 border border-amber-200 shadow-sm">
+    <div class="flex items-center gap-2 mb-4">
+      <i class="fas fa-crown text-amber-600 text-xl"></i>
+      <h2 class="font-bold text-gray-800 text-xl">Administrator Dashboard</h2>
+      <span class="admin-mode-badge ml-2"><i class="fas fa-lock mr-1"></i>Active</span>
+    </div>
+    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 mb-5">
+      <input type="text" id="newCourse" placeholder="📘 Course" class="border border-gray-300 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-blue-400 outline-none">
+      <input type="text" id="newSem" placeholder="📚 Semester" class="border border-gray-300 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-blue-400 outline-none">
+      <input type="text" id="newScheme" placeholder="⚙️ Scheme" class="border border-gray-300 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-blue-400 outline-none">
+      <input type="text" id="newTheoryStart" placeholder="📅 Theory Start" class="border border-gray-300 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-blue-400 outline-none">
+      <input type="text" id="newTheoryEnd" placeholder="📅 Theory End" class="border border-gray-300 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-blue-400 outline-none">
+      <input type="text" id="newResultDay" placeholder="🎯 Result Day" class="border border-gray-300 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-blue-400 outline-none">
+      <input type="text" id="newRemark" placeholder="💬 Remark" class="border border-gray-300 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-blue-400 outline-none">
+      <button id="addEntryBtn" class="btn-primary text-white rounded-xl py-2.5 text-sm font-semibold shadow-md"><i class="fas fa-plus mr-2"></i> Add Entry</button>
+    </div>
+    <div class="flex flex-wrap gap-3 pt-2 border-t border-amber-200">
+      <button id="exportBtn" class="bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow hover:bg-emerald-700 transition"><i class="fas fa-download mr-1"></i> Export JSON</button>
+      <button id="resetBtn" class="bg-rose-600 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow hover:bg-rose-700 transition"><i class="fas fa-undo-alt mr-1"></i> Reset Default</button>
+      <button id="clearHistoryBtn" class="bg-gray-600 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow hover:bg-gray-700 transition"><i class="fas fa-trash-alt mr-1"></i> Clear History</button>
+      <button id="testNotificationBtn" class="bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow hover:bg-indigo-700 transition"><i class="fas fa-bell mr-1"></i> Test Notification</button>
+    </div>
+    <p class="text-xs text-gray-500 mt-4"><i class="fas fa-edit mr-1"></i> Click edit icon next to any cell to modify • Changes sync to cloud instantly</p>
+  </div>
+
+  <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200">
+    <div class="table-wrapper">
+      <table class="min-w-full text-sm">
+        <thead class="bg-gradient-to-r from-blue-800 to-indigo-900 text-white">
+          <tr class="text-xs uppercase tracking-wider">
+            <th class="p-3">#</th><th>Course</th><th>Sem</th><th>Scheme</th><th>Theory Start</th><th>Theory End</th><th>Result Day</th><th>Remark</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          <tr><td colspan="9" class="text-center py-12"><div class="spinner"></div><p class="text-gray-500 mt-3 text-sm">Loading timetable from cloud...</p></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  
+  <div class="text-xs text-gray-500 mt-4 flex justify-between items-center">
+    <span><i class="far fa-clock mr-1"></i> Last sync: <span id="lastSync" class="font-mono">—</span></span>
+    <span id="notifStatus" class="flex items-center gap-1"><i class="fas fa-bell-slash text-gray-400"></i> <span>Notifications off</span></span>
+    <span><i class="fas fa-history mr-1"></i> <span id="totalChanges">0</span> updates tracked</span>
+  </div>
+</div>
+
+<div id="toast" class="toast"><i class="fas fa-bell text-amber-300 text-lg"></i><span id="toastMsg" class="ml-1">Notification</span></div>
+
+<script>
+const JSONBIN_BIN_ID = "6a0c408dee5a733b12e3901b";
+const JSONBIN_API_KEY = "$2a$10$tRGv70nFoF/rZqTe2OFv0u7.KV1VWHO1FDy4CpGlGqvo3UVaNtonm";
+
+const DEFAULT_DATA = [
+  {"slno":1,"course":"B.Arch","sem":"2","scheme":"21","theoryStart":"16-06-2026","theoryEnd":"08-07-2026","resultDay":"29-07-2026","remark":""},
+  {"slno":2,"course":"B.Arch","sem":"4","scheme":"21","theoryStart":"16-06-2026","theoryEnd":"08-07--2026","resultDay":"29-07-2026","remark":""},
+  {"slno":3,"course":"B.Arch","sem":"6","scheme":"21","theoryStart":"18-05-2026","theoryEnd":"17-06-2026","resultDay":"08-07-2026","remark":""},
+  {"slno":4,"course":"B.Arch","sem":"8","scheme":"21","theoryStart":"01-06-2026","theoryEnd":"13-06-2026","resultDay":"08-06-2026","remark":""},
+  {"slno":5,"course":"B.Arch","sem":"10","scheme":"21","theoryStart":"","theoryEnd":"","resultDay":"","remark":""},
+  {"slno":6,"course":"B.Design","sem":"2","scheme":"22","theoryStart":"16-06-2026","theoryEnd":"08-07-2026","resultDay":"29-07-2026","remark":""},
+  {"slno":7,"course":"B.Design","sem":"4","scheme":"22","theoryStart":"16-06-2026","theoryEnd":"08-07-2026","resultDay":"29-07-2026","remark":""},
+  {"slno":8,"course":"B.Design","sem":"6","scheme":"22","theoryStart":"18-05-2026","theoryEnd":"17-06-2026","resultDay":"08-07-2026","remark":""},
+  {"slno":9,"course":"BE","sem":"2","scheme":"25","theoryStart":"16-06-2026","theoryEnd":"08-07-2026","resultDay":"29-07-2026","remark":""},
+  {"slno":10,"course":"BE","sem":"4","scheme":"22","theoryStart":"16-06-2026","theoryEnd":"08-07-2026","resultDay":"29-07-2026","remark":""},
+  {"slno":11,"course":"BE","sem":"6","scheme":"22","theoryStart":"18-05-2026","theoryEnd":"17-06-2026","resultDay":"08-07-2026","remark":""},
+  {"slno":12,"course":"BE","sem":"8","scheme":"22","theoryStart":"","theoryEnd":"","resultDay":"","remark":""},
+  {"slno":13,"course":"B.Plan","sem":"2","scheme":"21","theoryStart":"16-06-2026","theoryEnd":"08-07-2026","resultDay":"29-07-2026","remark":""},
+  {"slno":14,"course":"B.Plan","sem":"4","scheme":"21","theoryStart":"16-06-2026","theoryEnd":"08-07-2026","resultDay":"29-07-2026","remark":""},
+  {"slno":15,"course":"B.Plan","sem":"6","scheme":"21","theoryStart":"18-05-2026","theoryEnd":"17-06-2026","resultDay":"08-07-2026","remark":""},
+  {"slno":16,"course":"B.Plan","sem":"8","scheme":"21","theoryStart":"21-04-2026","theoryEnd":"15-05-2026","resultDay":"08-06-2026","remark":""},
+  {"slno":17,"course":"BSc(Hons)","sem":"2","scheme":"21","theoryStart":"15-06-2026","theoryEnd":"16-06-2026","resultDay":"29-07-2026","remark":""},
+  {"slno":18,"course":"BSc(Hons)","sem":"4","scheme":"21","theoryStart":"15-06-2026","theoryEnd":"16-06-2026","resultDay":"29-07-2026","remark":""},
+  {"slno":19,"course":"BSc(Hons)","sem":"6","scheme":"21","theoryStart":"16-05-2026","theoryEnd":"18-05-2026","resultDay":"08-07-2026","remark":""},
+  {"slno":20,"course":"BSc(Hons)","sem":"8","scheme":"21","theoryStart":"21-04-2026","theoryEnd":"15-05-2026","resultDay":"08-06-2026","remark":""},
+  {"slno":21,"course":"BBA/BCA","sem":"2","scheme":"24","theoryStart":"16-06-2026","theoryEnd":"08-07-2026","resultDay":"29-07-2026","remark":""},
+  {"slno":22,"course":"BBA/BCA","sem":"4","scheme":"24","theoryStart":"18-05-2026","theoryEnd":"17-06-2026","resultDay":"08-07-2026","remark":""}
+];
+
+let currentData = [];
+let isAdmin = false;
+let swRegistration = null;
+let deferredPrompt = null;
+let changeHistory = [];
+let notificationPermissionGranted = false;
+let lastStoredVersion = '';
+let lastNotificationMessage = '';
+
+function loadChangeHistory() {
+  const saved = localStorage.getItem('change_history_vtu');
+  if (saved) changeHistory = JSON.parse(saved);
+  renderLatestChanges();
+  document.getElementById('totalChanges').innerText = changeHistory.length;
+}
+
+function saveChangeHistory() {
+  localStorage.setItem('change_history_vtu', JSON.stringify(changeHistory.slice(0, 25)));
+  renderLatestChanges();
+}
+
+function addToChangeHistory(message, type = 'edit') {
+  const change = {
+    id: Date.now(),
+    message: message,
+    type: type,
+    timestamp: new Date().toLocaleString('en-IN', { hour12: true })
+  };
+  changeHistory.unshift(change);
+  if (changeHistory.length > 25) changeHistory.pop();
+  saveChangeHistory();
+  renderLatestChanges();
+  const panel = document.getElementById('latestChangesPanel');
+  panel.style.display = 'block';
+}
+
+function renderLatestChanges() {
+  const container = document.getElementById('changesList');
+  const panel = document.getElementById('latestChangesPanel');
+  const countSpan = document.getElementById('changesCount');
+  if (changeHistory.length === 0) { panel.style.display = 'none'; return; }
+  panel.style.display = 'block';
+  countSpan.innerText = changeHistory.length;
+  let html = '';
+  changeHistory.forEach(change => {
+    const iconMap = { 'add': 'fa-plus-circle text-emerald-500', 'delete': 'fa-trash-alt text-rose-500', 'reset': 'fa-undo-alt text-orange-500', 'edit': 'fa-edit text-blue-500' };
+    const icon = iconMap[change.type] || 'fa-edit text-blue-500';
+    html += `<div class="latest-card bg-white p-3 rounded-xl shadow-sm flex items-center gap-3 hover:shadow-md transition-all">
+        <i class="fas ${icon} text-lg w-6"></i>
+        <div class="flex-1"><div class="text-sm font-semibold text-gray-800">${escapeHtml(change.message)}</div><div class="text-xs text-gray-400 mt-0.5"><i class="far fa-clock mr-1"></i>${change.timestamp}</div></div>
+        <button class="remove-change text-gray-300 hover:text-red-500 transition w-6 h-6 flex items-center justify-center rounded-full hover:bg-red-50" data-id="${change.id}"><i class="fas fa-times-circle text-sm"></i></button>
+      </div>`;
+  });
+  container.innerHTML = html;
+  document.querySelectorAll('.remove-change').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = parseInt(btn.dataset.id);
+      changeHistory = changeHistory.filter(c => c.id !== id);
+      saveChangeHistory();
+      renderLatestChanges();
+      showToast('Entry removed from history', 'info');
+    });
+  });
+}
+
+function clearHistory() { if (confirm('Clear all update history?')) { changeHistory = []; saveChangeHistory(); showToast('History cleared', 'info'); } }
+
+async function loadFromCloud(isAutoPoll = false) {
+  try {
+    updateStatus('syncing', 'Syncing...');
+    const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest`, { headers: { 'X-Master-Key': JSONBIN_API_KEY } });
+    if (response.ok) {
+      const data = await response.json();
+      const newData = (data.record && Array.isArray(data.record)) ? data.record : [...DEFAULT_DATA];
+      const newVersion = data.meta?.parentId || data.meta?.created || Date.now().toString();
+      
+      if (lastStoredVersion && newVersion !== lastStoredVersion && !isAutoPoll === false) {
+        const changeDescription = detectChanges(currentData, newData);
+        if (changeDescription && notificationPermissionGranted) {
+          sendPushNotification(changeDescription);
+          showToast(`🔔 ${changeDescription}`, 'info');
         }
-        
-        const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest`, {
-          headers: { 'X-Master-Key': JSONBIN_API_KEY }
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          if (data.record && Array.isArray(data.record)) {
-            currentData = data.record;
-            currentVersion = data.meta?.parentId || Date.now().toString();
-          } else if (data.record && data.record.entries) {
-            currentData = data.record.entries;
-          } else {
-            currentData = DEFAULT_TIMETABLE;
-          }
-        } else {
-          // Bin might not exist, create it
-          await createNewBin();
-        }
-        saveToLocalStorage(); // cache locally
-        renderTable();
-        updateSyncStatus("online", "Cloud Connected");
-        showToast("✅ Timetable loaded from cloud", "success");
-      } catch (error) {
-        console.error("Cloud load error:", error);
-        loadFromLocalStorage(); // fallback to local cache
-        updateSyncStatus("online", "Using cached data");
-        showToast("⚠️ Using offline cache - check internet", "warning");
-      } finally {
-        isSyncing = false;
-        document.getElementById('lastSyncTime').innerText = new Date().toLocaleTimeString();
-      }
-    }
-    
-    async function createNewBin() {
-      try {
-        const response = await fetch('https://api.jsonbin.io/v3/b', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Master-Key': JSONBIN_API_KEY
-          },
-          body: JSON.stringify(DEFAULT_TIMETABLE)
-        });
-        const data = await response.json();
-        console.warn("New bin created! ID:", data.metadata?.id);
-        showToast("📦 New cloud bin created - update your code with this Bin ID", "info");
-        currentData = DEFAULT_TIMETABLE;
-        renderTable();
-      } catch (e) {
-        console.error("Failed to create bin:", e);
-        currentData = DEFAULT_TIMETABLE;
-        renderTable();
-      }
-    }
-    
-    async function saveToCloud(changeDescription) {
-      if (JSONBIN_BIN_ID === "6a0c3cffee5a733b12e37880") {
-        saveToLocalStorage();
-        sendUpdateNotification(changeDescription);
-        renderTable();
-        return;
+        addToChangeHistory(changeDescription || 'Timetable was updated', 'edit');
       }
       
-      isSyncing = true;
-      updateSyncStatus("syncing", "Saving to cloud...");
-      try {
-        await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Master-Key': JSONBIN_API_KEY
-          },
-          body: JSON.stringify(currentData)
-        });
-        currentVersion = Date.now().toString();
-        saveToLocalStorage();
-        sendUpdateNotification(changeDescription);
-        renderTable();
-        updateSyncStatus("online", "Saved to Cloud");
-        showToast("💾 Changes saved to cloud & notified users", "success");
-      } catch (error) {
-        console.error("Save error:", error);
-        showToast("❌ Failed to save to cloud - check connection", "error");
-        updateSyncStatus("online", "Save failed - offline");
-      } finally {
-        isSyncing = false;
-        document.getElementById('lastSyncTime').innerText = new Date().toLocaleTimeString();
+      currentData = newData;
+      lastStoredVersion = newVersion;
+      localStorage.setItem('timetable_cache_vtu', JSON.stringify(currentData));
+      localStorage.setItem('timetable_version_vtu', lastStoredVersion);
+      updateStatus('online', 'Cloud Connected');
+      if (!isAutoPoll) showToast('✓ Data synced from cloud', 'success');
+    } else throw new Error('API error');
+  } catch (error) {
+    const cached = localStorage.getItem('timetable_cache_vtu');
+    currentData = cached ? JSON.parse(cached) : [...DEFAULT_DATA];
+    const cachedVersion = localStorage.getItem('timetable_version_vtu');
+    if (cachedVersion) lastStoredVersion = cachedVersion;
+    updateStatus('online', 'Offline Mode');
+    if (!isAutoPoll) showToast('⚠️ Offline mode - using cached data', 'warning');
+  }
+  renderTable();
+  document.getElementById('lastSync').innerText = new Date().toLocaleString();
+  document.getElementById('syncStatus').innerHTML = '<i class="fas fa-check-circle text-green-600"></i> Synced';
+}
+
+function detectChanges(oldData, newData) {
+  if (!oldData || oldData.length === 0) return null;
+  if (oldData.length !== newData.length) {
+    if (newData.length > oldData.length) return `📌 New entry added (Total: ${newData.length} courses)`;
+    else return `🗑 An entry was removed (Total: ${newData.length} courses)`;
+  }
+  
+  for (let i = 0; i < oldData.length; i++) {
+    const oldItem = oldData[i];
+    const newItem = newData[i];
+    if (oldItem.course !== newItem.course || oldItem.sem !== newItem.sem) continue;
+    
+    const fields = ['theoryStart', 'theoryEnd', 'resultDay', 'remark', 'scheme'];
+    for (let field of fields) {
+      if (oldItem[field] !== newItem[field]) {
+        const fieldLabels = { theoryStart: 'Theory Start', theoryEnd: 'Theory End', resultDay: 'Result Day', remark: 'Remark', scheme: 'Scheme' };
+        return `📝 ${newItem.course} (Sem ${newItem.sem}): ${fieldLabels[field]} updated`;
       }
     }
+  }
+  return null;
+}
+
+async function saveToCloud(changeMessage, changeType = 'edit') {
+  try {
+    document.getElementById('syncStatus').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_API_KEY },
+      body: JSON.stringify(currentData)
+    });
+    localStorage.setItem('timetable_cache_vtu', JSON.stringify(currentData));
+    lastStoredVersion = Date.now().toString();
+    localStorage.setItem('timetable_version_vtu', lastStoredVersion);
+    addToChangeHistory(changeMessage, changeType);
+    document.getElementById('syncStatus').innerHTML = '<i class="fas fa-check-circle text-green-600"></i> Synced';
+    document.getElementById('lastSync').innerText = new Date().toLocaleString();
+    showToast('☁️ Saved to cloud', 'success');
     
-    function saveToLocalStorage() {
-      localStorage.setItem('exam_timetable_cache', JSON.stringify(currentData));
-      localStorage.setItem('exam_timetable_version', currentVersion);
+    if (notificationPermissionGranted) {
+      sendPushNotification(changeMessage);
     }
-    
-    function loadFromLocalStorage() {
-      const cached = localStorage.getItem('exam_timetable_cache');
-      if (cached) {
-        currentData = JSON.parse(cached);
-      } else {
-        currentData = [...DEFAULT_TIMETABLE];
-      }
-      renderTable();
-      updateSyncStatus("online", "Local cache");
-    }
-    
-    // ======================= UI RENDERING =======================
-    function renderTable() {
-      const tbody = document.getElementById('tableBody');
-      if (!currentData.length) {
-        tbody.innerHTML = '<tr><td colspan="10" class="text-center py-10 text-gray-400">No timetable entries</td></tr>';
-        document.getElementById('rowCount').innerText = "0";
-        return;
-      }
-      
-      let html = '';
-      currentData.forEach((item, idx) => {
-        const sl = item.slno || (idx+1);
-        html += `<tr data-idx="${idx}" class="border-b hover:bg-gray-50 transition ${isAdminMode ? 'admin-row' : ''}">
-          <td class="px-3 py-2 font-medium text-gray-600">${sl}</td>
-          <td class="px-3 py-2 ${isAdminMode ? 'editable-cell' : ''}" data-field="course" data-idx="${idx}">${escapeHtml(item.course)}</td>
-          <td class="px-3 py-2 ${isAdminMode ? 'editable-cell' : ''}" data-field="sem" data-idx="${idx}">${escapeHtml(item.sem)}</td>
-          <td class="px-3 py-2 ${isAdminMode ? 'editable-cell' : ''}" data-field="scheme" data-idx="${idx}">${escapeHtml(item.scheme)}</td>
-          <td class="px-3 py-2 ${isAdminMode ? 'editable-cell' : ''}" data-field="theoryStart" data-idx="${idx}">${formatDate(item.theoryStart)}</td>
-          <td class="px-3 py-2 ${isAdminMode ? 'editable-cell' : ''}" data-field="theoryEnd" data-idx="${idx}">${formatDate(item.theoryEnd)}</td>
-          <td class="px-3 py-2 ${isAdminMode ? 'editable-cell' : ''}" data-field="practicalStart" data-idx="${idx}">${formatDate(item.practicalStart)}</td>
-          <td class="px-3 py-2 ${isAdminMode ? 'editable-cell' : ''}" data-field="practicalEnd" data-idx="${idx}">${formatDate(item.practicalEnd)}</td>
-          <td class="px-3 py-2 ${isAdminMode ? 'editable-cell' : ''}" data-field="resultDay" data-idx="${idx}">${formatDate(item.resultDay)}</td>
-          <td class="px-3 py-2 ${isAdminMode ? 'editable-cell' : ''}" data-field="remark" data-idx="${idx}">${escapeHtml(item.remark) || '—'}</td>
-        </tr>`;
+  } catch (error) {
+    localStorage.setItem('timetable_cache_vtu', JSON.stringify(currentData));
+    addToChangeHistory(changeMessage + ' (offline save)', changeType);
+    document.getElementById('syncStatus').innerHTML = '<i class="fas fa-exclamation-triangle text-amber-600"></i> Offline';
+    showToast('⚠️ Saved locally (offline)', 'warning');
+  }
+  renderTable();
+}
+
+async function sendPushNotification(message) {
+  if (!message) return;
+  
+  if (notificationPermissionGranted && swRegistration && swRegistration.active) {
+    try {
+      await swRegistration.active.postMessage({
+        type: 'SHOW_NOTIFICATION',
+        title: '📅 VTU Timetable Update',
+        body: message,
+        icon: '/favicon.ico',
+        badge: '/favicon.ico',
+        vibrate: [200, 100, 200],
+        tag: 'timetable-update',
+        renotify: true,
+        requireInteraction: true
       });
-      tbody.innerHTML = html;
-      document.getElementById('rowCount').innerText = currentData.length;
+      console.log('Notification sent via Service Worker:', message);
+    } catch(e) { console.log('SW message error:', e); }
+  }
+  
+  if (notificationPermissionGranted && Notification.permission === 'granted') {
+    try {
+      new Notification('📅 VTU Exam Timetable Update', { 
+        body: message, 
+        icon: '/favicon.ico',
+        badge: '/favicon.ico',
+        vibrate: [200, 100, 200],
+        silent: false,
+        requireInteraction: true
+      });
+      console.log('Direct notification shown:', message);
+    } catch(e) { console.log('Direct notification error:', e); }
+  }
+}
+
+async function enableNotifications() {
+  if ('Notification' in window) {
+    const permission = await Notification.requestPermission();
+    if (permission === 'granted') {
+      notificationPermissionGranted = true;
+      localStorage.setItem('notifications_enabled', 'true');
+      document.getElementById('notificationPrompt').classList.add('hidden');
+      document.getElementById('notifStatus').innerHTML = '<i class="fas fa-bell text-green-600"></i> <span>Notifications ON</span>';
+      showToast('🔔 Notifications enabled! You will receive updates', 'success');
       
-      // Attach edit listeners for admin mode
-      if (isAdminMode) {
-        document.querySelectorAll('.editable-cell').forEach(cell => {
-          cell.style.backgroundColor = '#fffbeb';
-          cell.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const idx = parseInt(cell.dataset.idx);
-            const field = cell.dataset.field;
-            const oldValue = currentData[idx][field];
-            const newValue = prompt(`✏️ Edit ${field} for ${currentData[idx].course} (Sem ${currentData[idx].sem}):`, oldValue || "");
-            if (newValue !== null && newValue !== oldValue) {
-              currentData[idx][field] = newValue;
-              saveToCloud(`📝 ${currentData[idx].course} Sem ${currentData[idx].sem}: ${field} changed to "${newValue}"`);
-            }
-          });
-        });
-        // Add delete buttons
-        document.querySelectorAll('#tableBody tr').forEach((row, idx) => {
-          if (!row.querySelector('.delete-btn-cell')) {
-            const td = document.createElement('td');
-            td.className = 'px-2 py-2 delete-btn-cell';
-            td.innerHTML = `<button class="delete-row bg-red-100 text-red-600 hover:bg-red-200 rounded-full w-7 h-7 transition"><i class="fas fa-trash-alt text-xs"></i></button>`;
-            row.appendChild(td);
-            td.querySelector('.delete-row').addEventListener('click', (e) => {
-              e.stopPropagation();
-              if (confirm(`Delete ${currentData[idx].course} Sem ${currentData[idx].sem}?`)) {
-                currentData.splice(idx, 1);
-                currentData.forEach((item, i) => item.slno = i+1);
-                saveToCloud(`🗑 Deleted ${currentData.length > 0 ? 'an entry' : 'last entry'}`);
-              }
-            });
-          }
-        });
-      } else {
-        document.querySelectorAll('.delete-btn-cell').forEach(cell => cell.remove());
+      if (swRegistration && swRegistration.active) {
+        await swRegistration.active.postMessage({ type: 'TEST_NOTIFICATION', message: 'Notifications are working! You will now receive timetable updates.' });
       }
+      new Notification('✅ Notifications Enabled', { body: 'You will now receive timetable updates instantly from all admins', icon: '/favicon.ico', requireInteraction: true });
+    } else {
+      showToast('❌ Notification permission denied', 'warning');
     }
-    
-    // ======================= HELPER FUNCTIONS =======================
-    function formatDate(d) { return (!d || d === "") ? "—" : d; }
-    function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
-    
-    function updateSyncStatus(status, text) {
-      const dot = document.getElementById('syncStatusDot');
-      const statusText = document.getElementById('syncStatusText');
-      dot.className = `status-badge status-${status}`;
-      statusText.innerText = text;
-    }
-    
-    function showToast(msg, type = "info") {
-      const toast = document.getElementById('toastMsg');
-      const span = document.getElementById('toastText');
-      span.innerText = msg;
-      toast.classList.add('show');
-      setTimeout(() => toast.classList.remove('show'), 4000);
-    }
-    
-    function sendUpdateNotification(message) {
-      showToast(`🔔 ${message}`, "info");
-      document.getElementById('lastSyncTime').innerText = new Date().toLocaleTimeString();
-      document.getElementById('dataVersionText').innerHTML = `v${Date.now().toString().slice(-6)}`;
-      
-      if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage({
-          type: 'SHOW_NOTIFICATION',
-          title: '📅 Exam Timetable Updated',
-          body: message,
-          icon: '/favicon.ico'
-        });
-      }
-      if (Notification.permission === 'granted') {
-        new Notification('Exam Timetable Updated', { body: message, icon: '/favicon.ico' });
-      }
-    }
-    
-    function addNewEntry() {
-      const newEntry = {
-        slno: currentData.length + 1,
-        course: document.getElementById('newCourse').value.trim() || "New Course",
-        sem: document.getElementById('newSem').value.trim() || "1",
-        scheme: document.getElementById('newScheme').value.trim() || "",
-        theoryStart: document.getElementById('newTheoryStart').value.trim(),
-        theoryEnd: document.getElementById('newTheoryEnd').value.trim(),
-        practicalStart: document.getElementById('newPracticalStart').value.trim(),
-        practicalEnd: document.getElementById('newPracticalEnd').value.trim(),
-        resultDay: document.getElementById('newResultDay').value.trim(),
-        remark: document.getElementById('newRemark').value.trim()
-      };
-      if (!newEntry.course) { showToast("Course name required", "warning"); return; }
-      currentData.push(newEntry);
-      saveToCloud(`➕ Added ${newEntry.course} Semester ${newEntry.sem}`);
-      ['newCourse','newSem','newScheme','newTheoryStart','newTheoryEnd','newPracticalStart','newPracticalEnd','newResultDay','newRemark'].forEach(id => document.getElementById(id).value = '');
-    }
-    
-    function resetToDefault() {
-      if (confirm("⚠️ Reset all data to default timetable? All current changes will be lost.")) {
-        currentData = JSON.parse(JSON.stringify(DEFAULT_TIMETABLE));
-        saveToCloud("🔄 Timetable reset to default");
-      }
-    }
-    
-    function exportJSON() {
-      const dataStr = JSON.stringify(currentData, null, 2);
-      const blob = new Blob([dataStr], {type: 'application/json'});
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `timetable_${new Date().toISOString().slice(0,19)}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-      showToast("📁 JSON exported successfully", "success");
-    }
-    
-    function importJSON(file) {
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        try {
-          const imported = JSON.parse(ev.target.result);
-          if (Array.isArray(imported)) {
-            currentData = imported;
-            saveToCloud(`📂 Imported JSON (${imported.length} entries)`);
-          } else throw new Error();
-        } catch(err) { showToast("Invalid JSON file", "error"); }
-      };
-      reader.readAsText(file);
-    }
-    
-    function toggleAdminMode() {
-      isAdminMode = !isAdminMode;
-      const panel = document.getElementById('adminPanel');
-      if (isAdminMode) {
-        panel.classList.remove('hidden');
-        document.getElementById('adminToggleBtn').classList.add('bg-amber-700', 'text-white');
-        document.getElementById('adminToggleBtn').classList.remove('bg-amber-100', 'text-amber-800');
-        showToast("Admin mode enabled - click any cell to edit", "info");
-      } else {
-        panel.classList.add('hidden');
-        document.getElementById('adminToggleBtn').classList.remove('bg-amber-700', 'text-white');
-        document.getElementById('adminToggleBtn').classList.add('bg-amber-100', 'text-amber-800');
-      }
-      renderTable();
-    }
-    
-    function startPolling() {
-      pollingInterval = setInterval(() => {
-        if (!isSyncing && JSONBIN_BIN_ID !== "6a0c3cffee5a733b12e37880") {
-          loadFromCloud();
+  } else {
+    showToast('⚠️ Notifications not supported on this browser', 'warning');
+  }
+}
+
+function testNotification() {
+  if (notificationPermissionGranted) {
+    sendPushNotification('🔔 Test notification: Your notification system is working! You will receive alerts when admins update the timetable.');
+    showToast('Test notification sent! Check your device.', 'success');
+  } else {
+    showToast('Please enable notifications first', 'warning');
+    document.getElementById('notificationPrompt').classList.remove('hidden');
+  }
+}
+
+async function editField(idx, field) {
+  const oldVal = currentData[idx][field] || '';
+  const fieldLabels = { course: 'Course', sem: 'Semester', scheme: 'Scheme', theoryStart: 'Theory Start', theoryEnd: 'Theory End', resultDay: 'Result Day', remark: 'Remark' };
+  const newVal = prompt(`✏️ Edit ${fieldLabels[field] || field} for ${currentData[idx].course}:`, oldVal);
+  if (newVal !== null && newVal !== oldVal) {
+    currentData[idx][field] = newVal;
+    await saveToCloud(`📝 ${currentData[idx].course} (Sem ${currentData[idx].sem}): ${fieldLabels[field]} changed from "${oldVal || '—'}" to "${newVal || '—'}"`, 'edit');
+    renderTable();
+  }
+}
+
+function renderTable() {
+  const tbody = document.getElementById('tableBody');
+  if (!currentData.length) { tbody.innerHTML = '<tr><td colspan="9" class="text-center py-10 text-gray-400">No entries</td></tr>'; return; }
+  let html = '';
+  currentData.forEach((item, idx) => {
+    html += `<tr data-idx="${idx}" class="border-b border-gray-100 hover:bg-gray-50 transition-all">
+      <td class="p-3 font-semibold text-gray-600">${item.slno || idx+1}</td>
+      <td class="p-3"><div class="flex items-center gap-2"><span>${escapeHtml(item.course)}</span>${isAdmin ? `<i class="fas fa-pen edit-icon-btn" data-field="course" data-idx="${idx}"></i>` : ''}</div></td>
+      <td class="p-3"><div class="flex items-center gap-2"><span>${escapeHtml(item.sem)}</span>${isAdmin ? `<i class="fas fa-pen edit-icon-btn" data-field="sem" data-idx="${idx}"></i>` : ''}</div></td>
+      <td class="p-3"><div class="flex items-center gap-2"><span>${escapeHtml(item.scheme)}</span>${isAdmin ? `<i class="fas fa-pen edit-icon-btn" data-field="scheme" data-idx="${idx}"></i>` : ''}</div></td>
+      <td class="p-3"><div class="flex items-center gap-2"><span>${item.theoryStart || '—'}</span>${isAdmin ? `<i class="fas fa-pen edit-icon-btn" data-field="theoryStart" data-idx="${idx}"></i>` : ''}</div></td>
+      <td class="p-3"><div class="flex items-center gap-2"><span>${item.theoryEnd || '—'}</span>${isAdmin ? `<i class="fas fa-pen edit-icon-btn" data-field="theoryEnd" data-idx="${idx}"></i>` : ''}</div></td>
+      <td class="p-3"><div class="flex items-center gap-2"><span>${item.resultDay || '—'}</span>${isAdmin ? `<i class="fas fa-pen edit-icon-btn" data-field="resultDay" data-idx="${idx}"></i>` : ''}</div></td>
+      <td class="p-3"><div class="flex items-center gap-2"><span>${escapeHtml(item.remark) || '—'}</span>${isAdmin ? `<i class="fas fa-pen edit-icon-btn" data-field="remark" data-idx="${idx}"></i>` : ''}</div></td>
+      <td class="p-3">${isAdmin ? `<button class="delete-row bg-rose-100 text-rose-600 hover:bg-rose-200 rounded-full w-8 h-8 transition-all shadow-sm" data-idx="${idx}"><i class="fas fa-trash-alt text-xs"></i></button>` : ''}</td>
+    </tr>`;
+  });
+  tbody.innerHTML = html;
+  if (isAdmin) {
+    document.querySelectorAll('.edit-icon-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const idx = parseInt(btn.dataset.idx);
+        const field = btn.dataset.field;
+        editField(idx, field);
+      });
+    });
+    document.querySelectorAll('.delete-row').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const idx = parseInt(btn.dataset.idx);
+        if (confirm(`⚠️ Delete ${currentData[idx].course} Semester ${currentData[idx].sem}?`)) {
+          const deleted = currentData.splice(idx, 1)[0];
+          currentData.forEach((item, i) => item.slno = i + 1);
+          saveToCloud(`🗑 Deleted ${deleted.course} Sem ${deleted.sem}`, 'delete');
         }
-      }, 30000); // Poll every 30 seconds for updates   
-    }
-    
-    // ======================= PWA & SERVICE WORKER =======================
-    async function registerSW() {
-      if ('serviceWorker' in navigator) {
-        const swCode = `self.addEventListener('install', e => self.skipWaiting());
-self.addEventListener('activate', e => e.waitUntil(clients.claim()));
+      });
+    });
+  }
+}
+
+function addNewEntry() {
+  const newEntry = {
+    slno: currentData.length + 1,
+    course: document.getElementById('newCourse').value.trim() || 'New Course',
+    sem: document.getElementById('newSem').value.trim() || '1',
+    scheme: document.getElementById('newScheme').value.trim() || '',
+    theoryStart: document.getElementById('newTheoryStart').value.trim(),
+    theoryEnd: document.getElementById('newTheoryEnd').value.trim(),
+    resultDay: document.getElementById('newResultDay').value.trim(),
+    remark: document.getElementById('newRemark').value.trim()
+  };
+  if (!newEntry.course) { showToast('Please enter course name', 'warning'); return; }
+  currentData.push(newEntry);
+  saveToCloud(`➕ Added ${newEntry.course} Semester ${newEntry.sem}`, 'add');
+  document.querySelectorAll('#adminPanel input').forEach(inp => inp.value = '');
+}
+
+function resetToDefault() {
+  if (confirm('⚠️ RESET to default timetable? All custom changes will be lost permanently.')) {
+    currentData = JSON.parse(JSON.stringify(DEFAULT_DATA));
+    saveToCloud('🔄 Timetable reset to default configuration', 'reset');
+  }
+}
+
+function exportJSON() {
+  const dataStr = JSON.stringify(currentData, null, 2);
+  const blob = new Blob([dataStr], {type: 'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `timetable_${new Date().toISOString().slice(0,19)}.json`;
+  a.click();
+  showToast('📁 JSON exported successfully', 'success');
+}
+
+function showToast(msg, type) {
+  const toast = document.getElementById('toast');
+  document.getElementById('toastMsg').innerHTML = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 3200);
+}
+
+function updateStatus(status, text) {
+  document.getElementById('statusDot').className = `status-dot ${status}`;
+  document.getElementById('statusText').innerText = text;
+}
+
+function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
+
+async function registerServiceWorker() {
+  if ('serviceWorker' in navigator) {
+    const swCode = `self.addEventListener('install', e => { self.skipWaiting(); });
+self.addEventListener('activate', e => { e.waitUntil(clients.claim()); });
 self.addEventListener('message', event => {
   if (event.data && event.data.type === 'SHOW_NOTIFICATION') {
-    self.registration.showNotification(event.data.title, { body: event.data.body, icon: event.data.icon || '/favicon.ico', vibrate: [200,100,200] });
+    self.registration.showNotification(event.data.title, { 
+      body: event.data.body, 
+      icon: event.data.icon || '/favicon.ico',
+      badge: event.data.badge || '/favicon.ico',
+      vibrate: event.data.vibrate || [200, 100, 200],
+      tag: event.data.tag || 'update',
+      renotify: true,
+      requireInteraction: true
+    });
+  }
+  if (event.data && event.data.type === 'TEST_NOTIFICATION') {
+    self.registration.showNotification('🔔 Notification Test', { body: event.data.message || 'Your notifications are working!', icon: '/favicon.ico', vibrate: [200, 100, 200], requireInteraction: true });
   }
 });`;
-        const swBlob = new Blob([swCode], {type: 'application/javascript'});
-        const swUrl = URL.createObjectURL(swBlob);
-        const registration = await navigator.serviceWorker.register(swUrl);
-        swRegistration = registration;
-        if (Notification.permission !== 'denied') await Notification.requestPermission();
-        document.getElementById('notificationStatus').innerHTML = '<i class="fas fa-bell text-green-600"></i> Notifications active';
-      }
-    }
+    const swBlob = new Blob([swCode], {type: 'application/javascript'});
+    const swUrl = URL.createObjectURL(swBlob);
+    const registration = await navigator.serviceWorker.register(swUrl);
+    swRegistration = registration;
     
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-      document.getElementById('installBtn').classList.remove('hidden');
-    });
-    document.getElementById('installBtn')?.addEventListener('click', async () => {
-      if (deferredPrompt) { deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt = null; document.getElementById('installBtn').classList.add('hidden'); }
-    });
+    const savedNotifSetting = localStorage.getItem('notifications_enabled');
+    const savedVersion = localStorage.getItem('timetable_version_vtu');
+    if (savedVersion) lastStoredVersion = savedVersion;
     
-    // ======================= INITIALIZATION =======================
-    async function init() {
-      await loadFromCloud();
-      await registerSW();
-      startPolling();
-      
-      document.getElementById('syncBtn').addEventListener('click', () => loadFromCloud());
-      document.getElementById('adminToggleBtn').addEventListener('click', toggleAdminMode);
-      document.getElementById('addEntryBtn').addEventListener('click', addNewEntry);
-      document.getElementById('exportJsonBtn').addEventListener('click', exportJSON);
-      document.getElementById('resetToDefaultBtn').addEventListener('click', resetToDefault);
-      document.getElementById('importJsonBtn').addEventListener('click', () => document.getElementById('jsonFileInput').click());
-      document.getElementById('jsonFileInput').addEventListener('change', (e) => {
-        if (e.target.files[0]) importJSON(e.target.files[0]);
-        e.target.value = '';
-      });
+    if (savedNotifSetting === 'true' && Notification.permission === 'granted') {
+      notificationPermissionGranted = true;
+      document.getElementById('notificationPrompt').classList.add('hidden');
+      document.getElementById('notifStatus').innerHTML = '<i class="fas fa-bell text-green-600"></i> <span>Notifications ON</span>';
+    } else if (Notification.permission !== 'denied' && !savedNotifSetting) {
+      document.getElementById('notificationPrompt').classList.remove('hidden');
     }
-    init();
-  </script>
+  }
+}
+
+window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; if (!localStorage.getItem('banner_dismissed_vtu')) document.getElementById('installBanner').classList.remove('hidden'); });
+document.getElementById('installAppBtn')?.addEventListener('click', async () => { if (deferredPrompt) { deferredPrompt.prompt(); const { outcome } = await deferredPrompt.userChoice; if (outcome === 'accepted') { document.getElementById('installBanner').classList.add('hidden'); localStorage.setItem('banner_dismissed_vtu', 'true'); showToast('🎉 App installed on home screen!', 'success'); } deferredPrompt = null; } });
+document.getElementById('closeBanner')?.addEventListener('click', () => { document.getElementById('installBanner').classList.add('hidden'); localStorage.setItem('banner_dismissed_vtu', 'true'); });
+document.getElementById('enableNotificationsBtn')?.addEventListener('click', enableNotifications);
+document.getElementById('testNotificationBtn')?.addEventListener('click', testNotification);
+window.addEventListener('appinstalled', () => { document.getElementById('installBanner').classList.add('hidden'); showToast('✅ Installation complete!', 'success'); });
+
+async function checkForUpdates() {
+  await loadFromCloud(true);
+}
+
+function toggleAdmin() { isAdmin = !isAdmin; document.getElementById('adminPanel').classList.toggle('hidden'); renderTable(); showToast(isAdmin ? '🔐 Admin Mode: Edit icons enabled' : '👤 User Mode', 'info'); }
+
+document.getElementById('refreshBtn')?.addEventListener('click', () => loadFromCloud(false));
+document.getElementById('adminBtn')?.addEventListener('click', toggleAdmin);
+document.getElementById('addEntryBtn')?.addEventListener('click', addNewEntry);
+document.getElementById('exportBtn')?.addEventListener('click', exportJSON);
+document.getElementById('resetBtn')?.addEventListener('click', resetToDefault);
+document.getElementById('clearHistoryBtn')?.addEventListener('click', clearHistory);
+
+loadChangeHistory();
+loadFromCloud(false);
+registerServiceWorker();
+setInterval(checkForUpdates, 15000);
+setTimeout(() => { if (!localStorage.getItem('banner_dismissed_vtu') && !deferredPrompt) document.getElementById('installBanner').classList.remove('hidden'); }, 1500);
+</script>
 </body>
 </html>
