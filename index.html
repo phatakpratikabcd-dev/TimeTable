@@ -152,12 +152,12 @@
         <thead class="bg-gradient-to-r from-blue-800 to-indigo-900 text-white">
           <tr class="text-xs uppercase tracking-wider">
             <th class="p-3">#</th><th>Course</th><th>Sem</th><th>Scheme</th><th>Theory Start</th><th>Theory End</th><th>Result Day</th><th>Remark</th><th></th>
-          </tr>
+          </td>
         </thead>
         <tbody id="tableBody">
           <tr><td colspan="9" class="text-center py-12"><div class="spinner"></div><p class="text-gray-500 mt-3 text-sm">Loading timetable from cloud...</p></td></tr>
         </tbody>
-      </table>
+       Libre
     </div>
   </div>
   
@@ -206,7 +206,6 @@ let deferredPrompt = null;
 let changeHistory = [];
 let notificationPermissionGranted = false;
 let lastStoredVersion = '';
-let lastNotificationMessage = '';
 
 function loadChangeHistory() {
   const saved = localStorage.getItem('change_history_vtu');
@@ -282,7 +281,7 @@ async function loadFromCloud(isAutoPoll = false) {
           sendPushNotification(changeDescription);
           showToast(`🔔 ${changeDescription}`, 'info');
         }
-        addToChangeHistory(changeDescription || 'Timetable was updated', 'edit');
+        if (changeDescription) addToChangeHistory(changeDescription, 'edit');
       }
       
       currentData = newData;
@@ -371,7 +370,6 @@ async function sendPushNotification(message) {
         renotify: true,
         requireInteraction: true
       });
-      console.log('Notification sent via Service Worker:', message);
     } catch(e) { console.log('SW message error:', e); }
   }
   
@@ -385,7 +383,6 @@ async function sendPushNotification(message) {
         silent: false,
         requireInteraction: true
       });
-      console.log('Direct notification shown:', message);
     } catch(e) { console.log('Direct notification error:', e); }
   }
 }
@@ -561,12 +558,45 @@ self.addEventListener('message', event => {
   }
 }
 
-window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; if (!localStorage.getItem('banner_dismissed_vtu')) document.getElementById('installBanner').classList.remove('hidden'); });
-document.getElementById('installAppBtn')?.addEventListener('click', async () => { if (deferredPrompt) { deferredPrompt.prompt(); const { outcome } = await deferredPrompt.userChoice; if (outcome === 'accepted') { document.getElementById('installBanner').classList.add('hidden'); localStorage.setItem('banner_dismissed_vtu', 'true'); showToast('🎉 App installed on home screen!', 'success'); } deferredPrompt = null; } });
-document.getElementById('closeBanner')?.addEventListener('click', () => { document.getElementById('installBanner').classList.add('hidden'); localStorage.setItem('banner_dismissed_vtu', 'true'); });
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  console.log('beforeinstallprompt fired', deferredPrompt);
+  if (!localStorage.getItem('banner_dismissed_vtu')) {
+    document.getElementById('installBanner').classList.remove('hidden');
+  }
+});
+
+document.getElementById('installAppBtn')?.addEventListener('click', async () => {
+  console.log('Install button clicked', deferredPrompt);
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    console.log('User choice:', outcome);
+    if (outcome === 'accepted') {
+      document.getElementById('installBanner').classList.add('hidden');
+      localStorage.setItem('banner_dismissed_vtu', 'true');
+      showToast('🎉 App installed on home screen!', 'success');
+    }
+    deferredPrompt = null;
+  } else {
+    showToast('Installation not available right now. Try using Chrome browser.', 'warning');
+  }
+});
+
+document.getElementById('closeBanner')?.addEventListener('click', () => {
+  document.getElementById('installBanner').classList.add('hidden');
+  localStorage.setItem('banner_dismissed_vtu', 'true');
+});
+
+window.addEventListener('appinstalled', () => {
+  console.log('App installed event fired');
+  document.getElementById('installBanner').classList.add('hidden');
+  showToast('✅ Installation complete!', 'success');
+});
+
 document.getElementById('enableNotificationsBtn')?.addEventListener('click', enableNotifications);
 document.getElementById('testNotificationBtn')?.addEventListener('click', testNotification);
-window.addEventListener('appinstalled', () => { document.getElementById('installBanner').classList.add('hidden'); showToast('✅ Installation complete!', 'success'); });
 
 async function checkForUpdates() {
   await loadFromCloud(true);
@@ -585,7 +615,11 @@ loadChangeHistory();
 loadFromCloud(false);
 registerServiceWorker();
 setInterval(checkForUpdates, 15000);
-setTimeout(() => { if (!localStorage.getItem('banner_dismissed_vtu') && !deferredPrompt) document.getElementById('installBanner').classList.remove('hidden'); }, 1500);
+setTimeout(() => { 
+  if (!localStorage.getItem('banner_dismissed_vtu') && !deferredPrompt) {
+    document.getElementById('installBanner').classList.remove('hidden');
+  }
+}, 1500);
 </script>
 </body>
 </html>
