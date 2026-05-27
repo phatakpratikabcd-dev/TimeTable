@@ -482,17 +482,21 @@ function addNewEntry() {
     resultDay: document.getElementById('newResultDay').value.trim(),
     remark: document.getElementById('newRemark').value.trim()
   };
-  if (!newEntry.course) { showToast('Please enter course name', 'warning'); return; }
-  currentData.push(newEntry);
-  saveToCloud(`➕ Added ${newEntry.course} Semester ${newEntry.sem}`, 'add');
-  document.querySelectorAll('#adminPanel input').forEach(inp => inp.value = '');
-}
 
-function resetToDefault() {
-  if (confirm('⚠️ RESET to default timetable? All custom changes will be lost permanently.')) {
-    currentData = JSON.parse(JSON.stringify(DEFAULT_DATA));
-    saveToCloud('🔄 Timetable reset to default configuration', 'reset');
+  if (!newEntry.course) {
+    showToast('Please enter course name', 'warning');
+    return;
   }
+
+  // Add newest entry at TOP
+  currentData.unshift(newEntry);
+
+  // Reassign serial numbers
+  currentData.forEach((item, i) => item.slno = i + 1);
+
+  saveToCloud(`➕ Added ${newEntry.course} Semester ${newEntry.sem}`, 'add');
+
+  document.querySelectorAll('#adminPanel input').forEach(inp => inp.value = '');
 }
 
 function exportJSON() {
