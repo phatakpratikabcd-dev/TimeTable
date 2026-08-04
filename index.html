@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#1E3A8A">
-  <meta name="description" content="UG & PG Examination Timetable June-July 2026">
-  <title>VTU Exam Timetable 2026 | UG + PG</title>
+  <meta name="description" content="UG Examination Timetable June-July 2026">
+  <title>VTU UG Exam Timetable 2026</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -52,10 +52,6 @@
     .latest-card { background: linear-gradient(135deg, #f0f9ff, #e0f2fe); border-left: 4px solid #3b82f6; transition: all 0.3s; border-radius: 16px; }
     .latest-card:hover { transform: translateX(6px); box-shadow: 0 8px 20px rgba(59,130,246,0.2); }
     
-    .tab-btn { transition: all 0.2s; }
-    .tab-btn.active { background: #1e3a8a; color: white; box-shadow: 0 4px 12px rgba(30,58,138,0.3); }
-    .tab-btn:not(.active):hover { background: #e0e7ff; }
-    
     .spinner { border: 3px solid #e2e8f0; border-top-color: #3b82f6; border-radius: 50%; width: 42px; height: 42px; animation: spin 0.8s linear infinite; margin: 20px auto; }
     @keyframes spin { to { transform: rotate(360deg); } }
   </style>
@@ -72,9 +68,9 @@
       </div>
       <div>
         <h1 class="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-blue-900 via-blue-700 to-blue-600 bg-clip-text text-transparent">
-          VTU Exam Timetable
+          UG Exam Timetable
         </h1>
-        <p class="text-gray-500 text-sm mt-1">June-July 2026 • UG & PG Programmes</p>
+        <p class="text-gray-500 text-sm mt-1">June-July 2026 • Undergraduate Programmes</p>
         <div class="flex items-center gap-4 mt-1.5 text-xs">
           <span class="flex items-center"><span class="status-dot online" id="statusDot"></span><span id="statusText" class="font-medium">Connected</span></span>
           <span class="text-gray-300">|</span>
@@ -87,12 +83,6 @@
       <button id="refreshBtn" class="bg-white/80 backdrop-blur-sm text-blue-700 px-4 py-2 rounded-full text-sm font-semibold shadow-md hover:shadow-lg transition border border-blue-200"><i class="fas fa-sync-alt mr-1"></i> Refresh</button>
       <button id="adminBtn" class="bg-amber-100 text-amber-800 px-4 py-2 rounded-full text-sm font-semibold shadow-md hover:shadow-lg transition"><i class="fas fa-user-shield mr-1"></i> Admin</button>
     </div>
-  </div>
-
-  <!-- Tabs -->
-  <div class="flex gap-2 mb-6 bg-white p-1.5 rounded-2xl shadow-sm border border-gray-200 max-w-md">
-    <button id="tabUG" class="tab-btn active flex-1 py-2.5 px-4 rounded-xl text-sm font-semibold text-gray-700 transition"><i class="fas fa-graduation-cap mr-2"></i> UG</button>
-    <button id="tabPG" class="tab-btn flex-1 py-2.5 px-4 rounded-xl text-sm font-semibold text-gray-700 transition"><i class="fas fa-user-graduate mr-2"></i> PG</button>
   </div>
 
   <!-- Dashboard Cards -->
@@ -114,7 +104,6 @@
       <i class="fas fa-crown text-amber-600 text-xl"></i>
       <h2 class="font-bold text-gray-800 text-xl">Administrator Dashboard</h2>
       <span class="admin-mode-badge ml-2"><i class="fas fa-lock mr-1"></i>Active</span>
-      <span id="adminTabLabel" class="text-sm text-gray-600 ml-2">(Editing: <span class="font-semibold">UG</span>)</span>
     </div>
     <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 mb-5">
       <input type="text" id="newCourse" placeholder="📘 Course" class="border border-gray-300 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-blue-400 outline-none">
@@ -156,7 +145,7 @@
           </tr>
         </thead>
         <tbody id="tableBody">
-          <tr><td colspan="11" class="text-center py-12"><div class="spinner"></div><p class="text-gray-500 mt-3 text-sm">Loading timetable...</p></td></tr>
+          <tr><td colspan="11" class="text-center py-12"><div class="spinner"></div><p class="text-gray-500 mt-3 text-sm">Loading UG timetable...</p></td></tr>
         </tbody>
       </table>
     </div>
@@ -165,7 +154,6 @@
   <div class="text-xs text-gray-500 mt-4 flex justify-between items-center">
     <span><i class="far fa-clock mr-1"></i> Last sync: <span id="lastSync" class="font-mono">—</span></span>
     <span><i class="fas fa-history mr-1"></i> <span id="totalChanges">0</span> updates tracked</span>
-    <span id="dataTypeLabel" class="font-medium text-blue-600">UG Data</span>
   </div>
 </div>
 
@@ -173,7 +161,7 @@
 
 <script>
 // ===== UG DATA =====
-const UG_DATA = [
+const DEFAULT_DATA = [
   {"slno":1,"course":"B.Arch","sem":"2","scheme":"21","theoryStart":"16-06-2026","theoryEnd":"08-07-2026","practicalStart":"","practicalEnd":"","expectedResultDay":"29-07-2026","remark":""},
   {"slno":2,"course":"B.Arch","sem":"4","scheme":"21","theoryStart":"16-06-2026","theoryEnd":"08-07-2026","practicalStart":"","practicalEnd":"","expectedResultDay":"29-07-2026","remark":""},
   {"slno":3,"course":"B.Arch","sem":"6","scheme":"21","theoryStart":"18-05-2026","theoryEnd":"17-06-2026","practicalStart":"","practicalEnd":"","expectedResultDay":"08-07-2026","remark":""},
@@ -198,26 +186,7 @@ const UG_DATA = [
   {"slno":22,"course":"BBA/BCA","sem":"4","scheme":"24","theoryStart":"18-05-2026","theoryEnd":"17-06-2026","practicalStart":"","practicalEnd":"","expectedResultDay":"08-07-2026","remark":""}
 ];
 
-// ===== PG DATA from JuneJulyPG2026.xlsx =====
-const PG_DATA = [
-  {"slno":1,"course":"MBA","sem":"2nd","scheme":"24","theoryStart":"2026-07-27","theoryEnd":"2026-08-14","practicalStart":"","practicalEnd":"","expectedResultDay":"2026-08-22","remark":""},
-  {"slno":2,"course":"MBA","sem":"4th","scheme":"24","theoryStart":"2026-07-27","theoryEnd":"2026-08-26","practicalStart":"","practicalEnd":"","expectedResultDay":"2026-09-05","remark":""},
-  {"slno":3,"course":"MBA(DM)","sem":"2nd","scheme":"24","theoryStart":"2026-07-22","theoryEnd":"2026-08-06","practicalStart":"2026-08-07","practicalEnd":"2026-08-13","expectedResultDay":"2026-08-21","remark":""},
-  {"slno":4,"course":"MBA(DM)","sem":"4th","scheme":"24","theoryStart":"2026-08-01","theoryEnd":"2026-08-26","practicalStart":"2026-07-27","practicalEnd":"2026-07-31","expectedResultDay":"2026-09-05","remark":""},
-  {"slno":5,"course":"MCA","sem":"2nd","scheme":"24","theoryStart":"2026-07-22","theoryEnd":"2026-08-06","practicalStart":"2026-08-07","practicalEnd":"2026-08-13","expectedResultDay":"2026-08-21","remark":""},
-  {"slno":6,"course":"MCA","sem":"4th","scheme":"24","theoryStart":"2026-05-18","theoryEnd":"2026-06-12","practicalStart":"2026-06-15","practicalEnd":"2026-06-19","expectedResultDay":"2026-06-27","remark":"2026-07-23"},
-  {"slno":7,"course":"M.Arch","sem":"2nd","scheme":"24","theoryStart":"2026-07-22","theoryEnd":"2026-08-06","practicalStart":"2026-08-07","practicalEnd":"2026-08-13","expectedResultDay":"2026-08-21","remark":""},
-  {"slno":8,"course":"M.Arch","sem":"4th","scheme":"24","theoryStart":"2026-05-18","theoryEnd":"2026-06-12","practicalStart":"2026-06-15","practicalEnd":"2026-06-19","expectedResultDay":"2026-06-27","remark":""},
-  {"slno":9,"course":"M.Plan","sem":"2nd","scheme":"24","theoryStart":"2026-07-22","theoryEnd":"2026-08-06","practicalStart":"2026-08-07","practicalEnd":"2026-08-13","expectedResultDay":"2026-08-21","remark":""},
-  {"slno":10,"course":"M.Plan","sem":"4th","scheme":"24","theoryStart":"2026-05-18","theoryEnd":"2026-06-12","practicalStart":"2026-06-15","practicalEnd":"2026-06-19","expectedResultDay":"2026-06-27","remark":""},
-  {"slno":11,"course":"M.Sc","sem":"2nd","scheme":"24","theoryStart":"2026-07-22","theoryEnd":"2026-08-06","practicalStart":"2026-08-07","practicalEnd":"2026-08-13","expectedResultDay":"2026-08-21","remark":""},
-  {"slno":12,"course":"M.Sc","sem":"4th","scheme":"24","theoryStart":"2026-05-18","theoryEnd":"2026-06-12","practicalStart":"2026-06-15","practicalEnd":"2026-06-19","expectedResultDay":"2026-06-27","remark":""},
-  {"slno":13,"course":"M.Tech","sem":"2nd","scheme":"25","theoryStart":"2026-07-22","theoryEnd":"2026-08-06","practicalStart":"2026-08-07","practicalEnd":"2026-08-13","expectedResultDay":"2026-08-21","remark":""},
-  {"slno":14,"course":"M.Tech","sem":"4th","scheme":"24","theoryStart":"2026-05-18","theoryEnd":"2026-06-12","practicalStart":"2026-06-15","practicalEnd":"2026-06-19","expectedResultDay":"2026-06-27","remark":"Result announced on 28-07-2026"}
-];
-
 let currentData = [];
-let currentMode = 'UG'; // 'UG' or 'PG'
 let isAdmin = false;
 let changeHistory = [];
 let currentSort = { column: 'slno', direction: 'asc' };
@@ -237,32 +206,16 @@ function updateStatus(status, text) {
   document.getElementById('statusText').innerText = text;
 }
 
-function getDefaultData(mode) {
-  return mode === 'UG' ? JSON.parse(JSON.stringify(UG_DATA)) : JSON.parse(JSON.stringify(PG_DATA));
-}
-
-function isPGData(data) {
-  if (!data || !data.length) return false;
-  const pgCourses = ['MBA', 'MCA', 'M.Tech', 'M.Arch', 'M.Plan', 'M.Sc', 'MBA(DM)'];
-  return pgCourses.some(c => data[0]?.course === c);
-}
-
-function isUGData(data) {
-  if (!data || !data.length) return false;
-  const ugCourses = ['B.Arch', 'B.Design', 'BE', 'B.Plan', 'BSc(Hons)', 'BBA/BCA'];
-  return ugCourses.some(c => data[0]?.course === c);
-}
-
 // ===== Data Management =====
 function loadChangeHistory() {
-  const saved = localStorage.getItem('change_history_vtu_combined');
+  const saved = localStorage.getItem('change_history_ug_vtu');
   if (saved) changeHistory = JSON.parse(saved);
   renderLatestChanges();
   document.getElementById('totalChanges').innerText = changeHistory.length;
 }
 
 function saveChangeHistory() {
-  localStorage.setItem('change_history_vtu_combined', JSON.stringify(changeHistory.slice(0, 25)));
+  localStorage.setItem('change_history_ug_vtu', JSON.stringify(changeHistory.slice(0, 25)));
   renderLatestChanges();
 }
 
@@ -346,7 +299,7 @@ function renderDashboard() {
   
   const sortedDates = Array.from(examCountByDate.keys()).sort();
   const totalExams = currentData.length;
-  const upcomingExams = currentData.filter(item => item.theoryStart && new Date(item.theoryStart) > new Date()).length;
+  const upcomingExams = currentData.filter(item => item.theoryStart && new Date(item.theoryStart.split('-').reverse().join('-')) > new Date()).length;
   
   // Count by course
   const courseCount = {};
@@ -358,7 +311,7 @@ function renderDashboard() {
   let html = `
     <div class="dashboard-card p-4 text-center shadow-sm">
       <div class="text-3xl font-bold text-blue-600">${totalExams}</div>
-      <div class="text-xs text-gray-500 mt-1">Total Exams</div>
+      <div class="text-xs text-gray-500 mt-1">Total UG Exams</div>
     </div>
     <div class="dashboard-card p-4 text-center shadow-sm">
       <div class="text-3xl font-bold text-emerald-600">${upcomingExams}</div>
@@ -443,68 +396,33 @@ async function loadFromCloud() {
     if (response.ok) {
       const data = await response.json();
       const cloudData = data.record || [];
-      if (cloudData.length > 0) {
-        // Determine if it's UG or PG data
-        if (isUGData(cloudData)) {
-          currentData = cloudData;
-          currentMode = 'UG';
-          document.getElementById('tabUG').classList.add('active');
-          document.getElementById('tabPG').classList.remove('active');
-          document.getElementById('dataTypeLabel').innerText = 'UG Data';
-          document.getElementById('adminTabLabel').innerHTML = '(Editing: <span class="font-semibold">UG</span>)';
-        } else if (isPGData(cloudData)) {
-          currentData = cloudData;
-          currentMode = 'PG';
-          document.getElementById('tabPG').classList.add('active');
-          document.getElementById('tabUG').classList.remove('active');
-          document.getElementById('dataTypeLabel').innerText = 'PG Data';
-          document.getElementById('adminTabLabel').innerHTML = '(Editing: <span class="font-semibold">PG</span>)';
-        } else {
-          // Unknown data, default to UG
-          currentData = getDefaultData('UG');
-          currentMode = 'UG';
-        }
+      // Check if cloud data is UG data
+      const isUG = cloudData.length > 0 && ['B.Arch', 'B.Design', 'BE', 'B.Plan', 'BSc(Hons)', 'BBA/BCA'].some(c => cloudData[0]?.course === c);
+      if (isUG) {
+        currentData = cloudData;
       } else {
-        currentData = getDefaultData('UG');
-        currentMode = 'UG';
+        currentData = [...DEFAULT_DATA];
+        // Save UG data to cloud if cloud had PG data
+        await saveToCloud('UG timetable initialized', 'add');
       }
-      localStorage.setItem('timetable_cache_vtu_combined', JSON.stringify({ mode: currentMode, data: currentData }));
+      localStorage.setItem('timetable_cache_ug_vtu', JSON.stringify(currentData));
       updateStatus('online', 'Cloud Connected');
-      showToast('✓ Data loaded from cloud', 'success');
+      showToast('✓ UG data loaded', 'success');
     } else throw new Error('API error');
   } catch (error) {
-    const cached = localStorage.getItem('timetable_cache_vtu_combined');
+    const cached = localStorage.getItem('timetable_cache_ug_vtu');
     if (cached) {
-      try {
-        const parsed = JSON.parse(cached);
-        if (parsed.data && parsed.data.length > 0) {
-          currentData = parsed.data;
-          currentMode = parsed.mode || 'UG';
-          if (currentMode === 'UG') {
-            document.getElementById('tabUG').classList.add('active');
-            document.getElementById('tabPG').classList.remove('active');
-            document.getElementById('dataTypeLabel').innerText = 'UG Data';
-            document.getElementById('adminTabLabel').innerHTML = '(Editing: <span class="font-semibold">UG</span>)';
-          } else {
-            document.getElementById('tabPG').classList.add('active');
-            document.getElementById('tabUG').classList.remove('active');
-            document.getElementById('dataTypeLabel').innerText = 'PG Data';
-            document.getElementById('adminTabLabel').innerHTML = '(Editing: <span class="font-semibold">PG</span>)';
-          }
-        } else {
-          currentData = getDefaultData('UG');
-          currentMode = 'UG';
-        }
-      } catch(e) {
-        currentData = getDefaultData('UG');
-        currentMode = 'UG';
+      const parsed = JSON.parse(cached);
+      if (parsed.length > 0 && ['B.Arch', 'B.Design', 'BE', 'B.Plan', 'BSc(Hons)', 'BBA/BCA'].some(c => parsed[0]?.course === c)) {
+        currentData = parsed;
+      } else {
+        currentData = [...DEFAULT_DATA];
       }
     } else {
-      currentData = getDefaultData('UG');
-      currentMode = 'UG';
+      currentData = [...DEFAULT_DATA];
     }
     updateStatus('online', 'Offline Mode');
-    showToast('⚠️ Offline mode - using cached data', 'warning');
+    showToast('⚠️ Offline mode - using cached UG data', 'warning');
   }
   sortData(currentSort.column);
   renderDashboard();
@@ -519,13 +437,13 @@ async function saveToCloud(changeMessage, changeType = 'edit') {
       method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_API_KEY },
       body: JSON.stringify(currentData)
     });
-    localStorage.setItem('timetable_cache_vtu_combined', JSON.stringify({ mode: currentMode, data: currentData }));
+    localStorage.setItem('timetable_cache_ug_vtu', JSON.stringify(currentData));
     addToChangeHistory(changeMessage, changeType);
     document.getElementById('syncStatus').innerHTML = '<i class="fas fa-check-circle text-green-600"></i> Synced';
     document.getElementById('lastSync').innerText = new Date().toLocaleString();
     showToast('☁️ Saved to cloud', 'success');
   } catch (error) {
-    localStorage.setItem('timetable_cache_vtu_combined', JSON.stringify({ mode: currentMode, data: currentData }));
+    localStorage.setItem('timetable_cache_ug_vtu', JSON.stringify(currentData));
     addToChangeHistory(changeMessage + ' (offline save)', changeType);
     document.getElementById('syncStatus').innerHTML = '<i class="fas fa-exclamation-triangle text-amber-600"></i> Offline';
     showToast('⚠️ Saved locally (offline)', 'warning');
@@ -534,24 +452,10 @@ async function saveToCloud(changeMessage, changeType = 'edit') {
   sortData(currentSort.column);
 }
 
-// ===== Tab Switching =====
-function switchTab(mode) {
-  if (mode === currentMode && currentData.length > 0) return;
-  currentMode = mode;
-  currentData = getDefaultData(mode);
-  sortData(currentSort.column);
-  renderDashboard();
-  document.getElementById('dataTypeLabel').innerText = mode === 'UG' ? 'UG Data' : 'PG Data';
-  document.getElementById('adminTabLabel').innerHTML = `(Editing: <span class="font-semibold">${mode}</span>)`;
-  // Save to cloud when switching
-  saveToCloud(`Switched to ${mode} timetable view`, 'edit');
-  showToast(`📋 Switched to ${mode} timetable`);
-}
-
 // ===== Admin Functions =====
 function addNewEntry() {
   const newEntry = {
-    slno: 1, course: document.getElementById('newCourse').value.trim() || 'New Course',
+    slno: 1, course: document.getElementById('newCourse').value.trim() || 'New UG Course',
     sem: document.getElementById('newSem').value.trim() || '1', scheme: document.getElementById('newScheme').value.trim() || '',
     theoryStart: document.getElementById('newTheoryStart').value.trim(), theoryEnd: document.getElementById('newTheoryEnd').value.trim(),
     practicalStart: document.getElementById('newPracticalStart').value.trim(), practicalEnd: document.getElementById('newPracticalEnd').value.trim(),
@@ -560,14 +464,14 @@ function addNewEntry() {
   if (!newEntry.course) { showToast('Please enter course name', 'warning'); return; }
   currentData.unshift(newEntry);
   currentData.forEach((item, i) => item.slno = i + 1);
-  saveToCloud(`➕ Added ${newEntry.course} Semester ${newEntry.sem} (${currentMode})`, 'add');
+  saveToCloud(`➕ Added ${newEntry.course} Semester ${newEntry.sem}`, 'add');
   document.querySelectorAll('#adminPanel input').forEach(inp => inp.value = '');
 }
 
 function resetToDefault() {
-  if (confirm(`⚠️ RESET to default ${currentMode} timetable? All custom changes will be lost permanently.`)) {
-    currentData = getDefaultData(currentMode);
-    saveToCloud(`🔄 ${currentMode} timetable reset to default configuration`, 'reset');
+  if (confirm('⚠️ RESET to default UG timetable? All custom changes will be lost permanently.')) {
+    currentData = JSON.parse(JSON.stringify(DEFAULT_DATA));
+    saveToCloud('🔄 UG timetable reset to default configuration', 'reset');
   }
 }
 
@@ -575,9 +479,9 @@ function exportJSON() {
   const blob = new Blob([JSON.stringify(currentData, null, 2)], {type: 'application/json'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `${currentMode}_timetable_${new Date().toISOString().slice(0,19)}.json`;
+  a.download = `ug_timetable_${new Date().toISOString().slice(0,19)}.json`;
   a.click();
-  showToast(`📁 ${currentMode} JSON exported successfully`, 'success');
+  showToast('📁 UG JSON exported successfully', 'success');
 }
 
 function exportToExcel() {
@@ -592,9 +496,9 @@ function exportToExcel() {
   });
   const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
   const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, `${currentMode}_Timetable`);
-  XLSX.writeFile(workbook, `VTU_${currentMode}_Timetable_${new Date().toISOString().slice(0,19)}.xlsx`);
-  showToast(`📊 ${currentMode} Excel file downloaded!`, 'success');
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'UG_Timetable');
+  XLSX.writeFile(workbook, `VTU_UG_Timetable_${new Date().toISOString().slice(0,19)}.xlsx`);
+  showToast('📊 UG Excel file downloaded!', 'success');
 }
 
 function toggleAdmin() { isAdmin = !isAdmin; document.getElementById('adminPanel').classList.toggle('hidden'); renderTable(); showToast(isAdmin ? '🔐 Admin Mode: Edit icons enabled' : '👤 User Mode', 'info'); }
@@ -607,21 +511,6 @@ document.getElementById('exportBtn')?.addEventListener('click', exportJSON);
 document.getElementById('resetBtn')?.addEventListener('click', resetToDefault);
 document.getElementById('clearHistoryBtn')?.addEventListener('click', clearHistory);
 document.getElementById('exportExcelBtn')?.addEventListener('click', exportToExcel);
-
-document.getElementById('tabUG')?.addEventListener('click', () => {
-  if (currentMode === 'UG') return;
-  document.getElementById('tabUG').classList.add('active');
-  document.getElementById('tabPG').classList.remove('active');
-  switchTab('UG');
-});
-
-document.getElementById('tabPG')?.addEventListener('click', () => {
-  if (currentMode === 'PG') return;
-  document.getElementById('tabPG').classList.add('active');
-  document.getElementById('tabUG').classList.remove('active');
-  switchTab('PG');
-});
-
 document.querySelectorAll('.sortable').forEach(header => {
   header.addEventListener('click', () => sortData(header.dataset.sort));
 });
