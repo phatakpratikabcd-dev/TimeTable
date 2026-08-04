@@ -200,7 +200,7 @@
 const JSONBIN_BIN_ID = "6a1ebdc8da38895dfe7b26ae";
 const JSONBIN_API_KEY = "$2a$10$IAtt2ELhhnXcxCZAJKiyT.tF4ACkLiRM5MFBTIJ1Rwjb9b9LTOPKS";
 
-// PG DATA as per the provided xlsx (JuneJulyPG2026.xlsx)
+// PG DATA as per the provided xlsx (JuneJulyPG2026.xlsx) - EXACT DATA FROM YOUR FILE
 const DEFAULT_DATA = [
   {"slno":1,"course":"MBA","sem":"2nd","scheme":"24","theoryStart":"2026-07-27","theoryEnd":"2026-08-14","practicalStart":"","practicalEnd":"","expectedResultDay":"2026-08-22","remark":""},
   {"slno":2,"course":"MBA","sem":"4th","scheme":"24","theoryStart":"2026-07-27","theoryEnd":"2026-08-26","practicalStart":"","practicalEnd":"","expectedResultDay":"2026-09-05","remark":""},
@@ -364,14 +364,34 @@ async function loadFromCloud() {
     const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest`, { headers: { 'X-Master-Key': JSONBIN_API_KEY } });
     if (response.ok) {
       const data = await response.json();
-      currentData = (data.record && Array.isArray(data.record)) ? data.record : [...DEFAULT_DATA];
+      // Check if the data is PG data (contains PG courses)
+      const isPGData = data.record && Array.isArray(data.record) && data.record.length > 0 && 
+                       (data.record[0].course === 'MBA' || data.record[0].course === 'MCA' || data.record[0].course === 'M.Tech');
+      if (isPGData) {
+        currentData = data.record;
+      } else {
+        // If cloud has UG data, use our PG default
+        currentData = [...DEFAULT_DATA];
+        // Save PG data to cloud
+        await saveToCloud('Initialized PG timetable data', 'add');
+      }
       localStorage.setItem('timetable_cache_pg_vtu', JSON.stringify(currentData));
       updateStatus('online', 'Cloud Connected');
       showToast('✓ PG data synced from cloud', 'success');
     } else throw new Error('API error');
   } catch (error) {
     const cached = localStorage.getItem('timetable_cache_pg_vtu');
-    currentData = cached ? JSON.parse(cached) : [...DEFAULT_DATA];
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      // Verify it's PG data
+      if (parsed.length > 0 && (parsed[0].course === 'MBA' || parsed[0].course === 'MCA' || parsed[0].course === 'M.Tech')) {
+        currentData = parsed;
+      } else {
+        currentData = [...DEFAULT_DATA];
+      }
+    } else {
+      currentData = [...DEFAULT_DATA];
+    }
     updateStatus('online', 'Offline Mode');
     showToast('⚠️ Offline mode - using cached PG data', 'warning');
   }
